@@ -25,6 +25,12 @@ return new class extends Migration
         } else {
             Schema::table('conversations', function (Blueprint $table) {
                 try {
+                    $table->dropForeign(['user_id']);
+                } catch (\Exception $e) {}
+                try {
+                    $table->dropForeign('conversations_user_id_foreign');
+                } catch (\Exception $e) {}
+                try {
                     $table->dropUnique(['user_id']);
                 } catch (\Exception $e) {}
                 try {
