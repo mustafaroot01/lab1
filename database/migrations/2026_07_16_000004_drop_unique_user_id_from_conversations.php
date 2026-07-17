@@ -23,24 +23,47 @@ return new class extends Migration
             DB::statement('CREATE INDEX conversations_patient_id_index ON conversations (patient_id);');
             DB::statement('PRAGMA foreign_keys = ON;');
         } else {
-            Schema::table('conversations', function (Blueprint $table) {
-                try {
+            // 1. محاولة حذف المفتاح الأجنبي أولاً لفك قيد الفهرس الفريد
+            try {
+                Schema::table('conversations', function (Blueprint $table) {
                     $table->dropForeign(['user_id']);
-                } catch (\Exception $e) {}
-                try {
+                });
+            } catch (\Throwable $e) {}
+
+            try {
+                Schema::table('conversations', function (Blueprint $table) {
                     $table->dropForeign('conversations_user_id_foreign');
-                } catch (\Exception $e) {}
-                try {
+                });
+            } catch (\Throwable $e) {}
+
+            // 2. محاولة حذف الفهرس الفريد (Unique Index)
+            try {
+                Schema::table('conversations', function (Blueprint $table) {
                     $table->dropUnique(['user_id']);
-                } catch (\Exception $e) {}
-                try {
+                });
+            } catch (\Throwable $e) {}
+
+            try {
+                Schema::table('conversations', function (Blueprint $table) {
                     $table->dropUnique('conversations_user_id_unique');
-                } catch (\Exception $e) {}
-                $table->index('user_id');
-                if (Schema::hasColumn('conversations', 'patient_id')) {
-                    $table->index('patient_id');
-                }
-            });
+                });
+            } catch (\Throwable $e) {}
+
+            // 3. إضافة الفهرس العادي للعمود user_id
+            try {
+                Schema::table('conversations', function (Blueprint $table) {
+                    $table->index('user_id');
+                });
+            } catch (\Throwable $e) {}
+
+            // 4. إضافة الفهرس للعمود patient_id إن وجد
+            if (Schema::hasColumn('conversations', 'patient_id')) {
+                try {
+                    Schema::table('conversations', function (Blueprint $table) {
+                        $table->index('patient_id');
+                    });
+                } catch (\Throwable $e) {}
+            }
         }
     }
 
