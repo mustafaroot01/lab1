@@ -14,20 +14,20 @@ class CheckCoverageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lat' => 'required|numeric|between:-90,90',
-            'lng' => 'required|numeric|between:-180,180',
+            'district_id' => 'nullable|exists:districts,id',
+            'lat'         => 'nullable|numeric|between:-90,90',
+            'lng'         => 'nullable|numeric|between:-180,180',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'lat.required' => 'خط العرض (lat) مطلوب',
-            'lat.numeric'  => 'خط العرض يجب أن يكون رقماً',
-            'lat.between'  => 'خط العرض يجب أن يكون بين -90 و 90',
-            'lng.required' => 'خط الطول (lng) مطلوب',
-            'lng.numeric'  => 'خط الطول يجب أن يكون رقماً',
-            'lng.between'  => 'خط الطول يجب أن يكون بين -180 و 180',
+            'district_id.exists' => 'القضاء المختار غير موجود في النظام',
+            'lat.numeric'        => 'خط العرض يجب أن يكون رقماً',
+            'lat.between'        => 'خط العرض يجب أن يكون بين -90 و 90',
+            'lng.numeric'        => 'خط الطول يجب أن يكون رقماً',
+            'lng.between'        => 'خط الطول يجب أن يكون بين -180 و 180',
         ];
     }
 }
