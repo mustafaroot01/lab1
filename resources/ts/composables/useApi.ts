@@ -1,8 +1,15 @@
 import { createFetch } from '@vueuse/core'
 import { destr } from 'destr'
 
+const getApiBaseUrl = () => {
+  const raw = import.meta.env.VITE_API_BASE_URL || '/api'
+  if (raw === '/api' || raw.endsWith('/api'))
+    return raw
+  return `${raw.replace(/\/+$/, '')}/api`
+}
+
 export const useApi = createFetch({
-  baseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseUrl: getApiBaseUrl(),
   fetchOptions: {
     headers: {
       Accept: 'application/json',
