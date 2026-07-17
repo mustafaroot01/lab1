@@ -23,6 +23,15 @@ class AdminAuthController extends Controller
             })
             ->first();
 
+        if (!$user) {
+            $user = \App\Models\User::where(function ($q) use ($request) {
+                    $q->where('email', $request->email)
+                      ->orWhere('phone', $request->email);
+                })
+                ->whereIn('role', ['admin', 'super_admin'])
+                ->first();
+        }
+
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'errors' => ['email' => ['بيانات الدخول غير صحيحة']],
