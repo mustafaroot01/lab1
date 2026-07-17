@@ -10,11 +10,13 @@ use Illuminate\Support\Facades\File;
 class MedicalDictionarySeeder extends Seeder
 {
     /**
-     * Run the database seeds.
      */
     public function run(): void
     {
-        $filePath = '/Users/root1/Desktop/lab/قاموس_التحاليل_الكامل.md';
+        $filePath = base_path('database/data/قاموس_التحاليل_الكامل.md');
+        if (!File::exists($filePath)) {
+            $filePath = '/Users/root1/Desktop/lab/قاموس_التحاليل_الكامل.md';
+        }
 
         if (!File::exists($filePath)) {
             $this->command->error("File not found: {$filePath}");
