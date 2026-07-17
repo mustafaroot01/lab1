@@ -46,7 +46,7 @@ class SearchController extends Controller
                 'description' => $p->description_ar,
                 'original_price' => $p->original_price,
                 'price'       => $p->discount_price ?? $p->original_price,
-                'image'       => $p->image ? asset('storage/' . $p->image) : null,
+                'image'       => $p->image ? (str_starts_with($p->image, 'data:') || str_starts_with($p->image, 'http') ? $p->image : asset('storage/' . $p->image)) : null,
             ]);
 
         return response()->json([

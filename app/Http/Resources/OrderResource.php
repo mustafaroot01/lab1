@@ -39,7 +39,7 @@ class OrderResource extends JsonResource
             // معلومات إضافية
             'doctor_name'    => $this->doctor_name,
             'referral_image' => $this->referral_image
-                ? (str_contains($this->referral_image, '/storage/') ? asset('storage/' . ltrim(explode('/storage/', $this->referral_image)[1], '/')) : (str_starts_with($this->referral_image, 'http') ? $this->referral_image : asset('storage/' . ltrim($this->referral_image, '/'))))
+                ? (str_starts_with($this->referral_image, 'data:') || str_starts_with($this->referral_image, 'http') ? $this->referral_image : (str_contains($this->referral_image, '/storage/') ? asset('storage/' . ltrim(explode('/storage/', $this->referral_image)[1], '/')) : asset('storage/' . ltrim($this->referral_image, '/'))))
                 : null,
             'notes'          => $this->notes,
             'cancel_reason'  => $this->cancel_reason,
