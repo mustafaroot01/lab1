@@ -51,8 +51,10 @@ class CreateOrderAction
             ];
         }
 
-        // 2. كلفة الخدمة (أجور الزيارة المنزلية حسب القضاء أو الفرع والحد المجاني)
+        // 2. كلفة الخدمة وتحديد الفرع المسؤول آلياً (حسب القضاء المختار أو الفرع المحدد له)
         $serviceFee = 0.0;
+        $resolvedBranchId = $dto->branchId;
+
         if ($dto->districtId) {
             $district = District::with('branch')->find($dto->districtId);
             if ($district) {
@@ -60,6 +62,10 @@ class CreateOrderAction
                 $freeThreshold = $district->free_threshold !== null ? (float) $district->free_threshold : ($district->branch ? (float) $district->branch->free_threshold : 0.0);
                 if ($freeThreshold > 0 && $subtotal >= $freeThreshold) {
                     $serviceFee = 0.0;
+                }
+                // تعيين الفرع المسؤول تلقائياً من القضاء إذا لم يتم إرساله من التطبيق
+                if (!$resolvedBranchId && $district->branch_id) {
+                    $resolvedBranchId = $district->branch_id;
                 }
             }
         } elseif ($dto->branchId) {
@@ -72,8 +78,13 @@ class CreateOrderAction
             }
         }
 
+        // إذا لم يتم تحديد فرع ولم يكن للقضاء فرع محدد، نربطه بالمختبر الوحيد النشط في النظام (Fallback to Single Lab)
+        if (!$resolvedBranchId) {
+            $resolvedBranchId = Branch::where('is_active', true)->value('id');
+        }
+
         // 3. حفظ الطلب في قاعدة البيانات ضمن transaction مع قفل صف الكوبون لمنع تجاوز الحد
-        $order = DB::transaction(function () use ($dto, $resolvedItems, $subtotal, $serviceFee) {
+        $order = DB::transaction(function () use ($dto, $resolvedItems, $subtotal, $serviceFee, $resolvedBranchId) {
             $couponId       = null;
             $discountAmount = 0.0;
 
@@ -114,7 +125,7 @@ class CreateOrderAction
             $order = Order::create([
                 'patient_id'      => $dto->user->id,
                 'user_id'         => $dto->user->id,
-                'branch_id'       => $dto->branchId,
+                'branch_id'       => $resolvedBranchId,
                 'district_id'     => $dto->districtId,
                 'area_id'         => $dto->areaId,
                 'coupon_id'       => $couponId,
