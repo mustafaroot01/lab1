@@ -85,6 +85,64 @@
 يجلب قائمة المحافظات والمناطق وألوان التميز لتسهيل تعبئة شاشة التسجيل الأولي للمريض.
 * **الرابط:** `GET /api/v1/patient/auth/onboarding-data` (أو `GET /api/mobile/auth/onboarding-data`)
 * **الحماية:** متاح للعامة (Public)
+* **الرد الناجح (200 OK):**
+  ```json
+  {
+    "status": true,
+    "message": "تم جلب بيانات التسجيل بنجاح",
+    "districts": [
+      {
+        "id": 1,
+        "name": "بعقوبة",
+        "governorate": "ديالى",
+        "branch_id": 1,
+        "branch": {
+          "id": 1,
+          "name_ar": "الفرع الرئيسي",
+          "phone": "07710030147",
+          "service_fee": 5000,
+          "free_threshold": 0
+        },
+        "areas": [
+          { "id": 1, "district_id": 1, "name": "مركز بعقوبة" },
+          { "id": 2, "district_id": 1, "name": "حي المعلمين" },
+          { "id": 3, "district_id": 1, "name": "التحرير" },
+          { "id": 4, "district_id": 1, "name": "المفرق" },
+          { "id": 5, "district_id": 1, "name": "بهرز" }
+        ]
+      },
+      {
+        "id": 2,
+        "name": "كنعان",
+        "governorate": "ديالى",
+        "areas": [
+          { "id": 6, "district_id": 2, "name": "مركز كنعان" },
+          { "id": 7, "district_id": 2, "name": "بزايز كنعان" },
+          { "id": 8, "district_id": 2, "name": "المرادية" }
+        ]
+      },
+      {
+        "id": 3,
+        "name": "الخالص",
+        "governorate": "ديالى",
+        "areas": [
+          { "id": 9, "district_id": 3, "name": "مركز الخالص" },
+          { "id": 10, "district_id": 3, "name": "المنصورية" },
+          { "id": 11, "district_id": 3, "name": "الأسود" },
+          { "id": 12, "district_id": 3, "name": "سد العظيم" }
+        ]
+      }
+    ],
+    "terms": {
+      "title": "الشروط والأحكام (Terms & Conditions)",
+      "content": "نص شروط الخدمة والحجز الميداني..."
+    },
+    "privacy": {
+      "title": "سياسة الخصوصية وحماية البيانات (Privacy Policy)",
+      "content": "نص سياسة الحفاظ على سرية وخصوصية نتائج المرضى..."
+    }
+  }
+  ```
 
 ---
 
