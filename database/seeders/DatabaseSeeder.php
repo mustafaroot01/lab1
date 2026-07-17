@@ -18,6 +18,19 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::firstOrCreate(
+            ['email' => 'support@lab.local'],
+            [
+                'name'                 => 'الدعم الفني',
+                'phone'                => '07700000000',
+                'password'             => bcrypt('changeme123'),
+                'role'                 => 'admin',
+                'is_profile_completed' => true,
+                'is_active'            => true,
+                'agreed_to_terms'      => true,
+            ]
+        );
+
+        User::firstOrCreate(
             ['email' => 'test@example.com'],
             [
                 'name'     => 'Test User',
