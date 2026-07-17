@@ -36,6 +36,10 @@ class TechnicianResource extends JsonResource
             return null;
         }
 
+        if (str_contains($path, '/storage/')) {
+            return asset('storage/' . ltrim(explode('/storage/', $path)[1], '/'));
+        }
+
         if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
             return $path;
         }

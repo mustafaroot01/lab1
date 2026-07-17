@@ -13,7 +13,11 @@ class BannerResource extends JsonResource
             'id'          => $this->id,
             'title'       => $this->title,
             'position'    => $this->position,
-            'image_url'   => $this->image,
+            'image_url'   => $this->image ? (
+                str_contains($this->image, '/storage/')
+                    ? asset('storage/' . ltrim(explode('/storage/', $this->image)[1], '/'))
+                    : (str_starts_with($this->image, 'http') ? $this->image : asset('storage/' . ltrim($this->image, '/')))
+            ) : null,
             'link_type'   => $this->link_type ?? 'none',
             'link_target' => $this->link_target,
             'sort_order'  => (int) $this->sort_order,

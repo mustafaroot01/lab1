@@ -12,9 +12,11 @@ class PopupStoryResource extends JsonResource
         return [
             'id'                 => $this->id,
             'title'              => $this->title,
-            'image_url'          => str_starts_with($this->image_path, 'http')
-                ? $this->image_path
-                : asset('storage/' . ltrim($this->image_path, '/')),
+            'image_url'          => str_contains($this->image_path, '/storage/')
+                ? asset('storage/' . ltrim(explode('/storage/', $this->image_path)[1], '/'))
+                : (str_starts_with($this->image_path, 'http')
+                    ? $this->image_path
+                    : asset('storage/' . ltrim($this->image_path, '/'))),
             'image_path'         => $this->image_path,
             'duration_seconds'   => (int) $this->duration_seconds,
             'display_frequency'  => $this->display_frequency,

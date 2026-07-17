@@ -31,11 +31,13 @@ class MobilePackageResource extends JsonResource
             'price'            => $current,
             'discount_percent' => $savings,
             'image'            => $this->image ? (
-                str_starts_with($this->image, 'http')
-                    ? $this->image
-                    : (str_starts_with($this->image, 'storage/')
-                        ? asset($this->image)
-                        : asset('storage/' . ltrim($this->image, '/')))
+                str_contains($this->image, '/storage/')
+                    ? asset('storage/' . ltrim(explode('/storage/', $this->image)[1], '/'))
+                    : (str_starts_with($this->image, 'http')
+                        ? $this->image
+                        : (str_starts_with($this->image, 'storage/')
+                            ? asset($this->image)
+                            : asset('storage/' . ltrim($this->image, '/'))))
             ) : null,
             'is_active'        => (bool) $this->is_active,
             'tests_count'      => $this->whenLoaded('tests', fn() => $this->tests->count(), 0),

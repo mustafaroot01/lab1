@@ -129,7 +129,6 @@ Route::prefix('settings/otp')->group(function () {
 });
 
 Route::prefix('settings/general')->group(function () {
-    Route::get('/', [GeneralSettingController::class, 'index']);
     Route::match(['post', 'put'], '/', [GeneralSettingController::class, 'update']);
 });
 
@@ -150,6 +149,7 @@ Route::patch('branch-service-fees/{branch}', [\App\Http\Controllers\Api\BranchSe
 
 // ─── Executive Dashboard Stats — إحصائيات لوحة التحكم الرئيسية ──────────
 Route::get('dashboard/stats', [\App\Http\Controllers\Api\DashboardController::class, 'stats']);
+Route::get('admin/dashboard/stats', [\App\Http\Controllers\Api\DashboardController::class, 'stats']);
 
 // ─── Dashboard Orders — إدارة الطلبات من لوحة التحكم ─────────────────────
 Route::get('orders', [\App\Http\Controllers\Api\OrderController::class, 'index']);

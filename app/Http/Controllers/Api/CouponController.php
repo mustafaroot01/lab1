@@ -15,6 +15,9 @@ use Carbon\Carbon;
 
 class CouponController extends Controller
 {
+    /**
+     * جلب قائمة الكوبونات وأكواد الخصم (مع فلترة الحالات والإحصائيات وتتبع الاستخدام)
+     */
     public function index(Request $request)
     {
         $query = Coupon::withCount('usages');
@@ -132,6 +135,9 @@ class CouponController extends Controller
         ];
     }
 
+    /**
+     * إنشاء كود خصم جديد وتحديد نسبة أو قيمة الخصم وحدود الاستخدام والتواريخ
+     */
     public function store(StoreCouponRequest $request)
     {
         $coupon = Coupon::create($request->validated());
@@ -143,6 +149,9 @@ class CouponController extends Controller
         ], 201);
     }
 
+    /**
+     * عرض تفاصيل كود الخصم وسجل وقائمة المراجعين الذين استخدموه
+     */
     public function show($id, Request $request)
     {
         $coupon = Coupon::findOrFail($id);
@@ -188,6 +197,9 @@ class CouponController extends Controller
         ]);
     }
 
+    /**
+     * تحديث بيانات كود الخصم وصلاحيته والتواريخ المحددة له
+     */
     public function update(UpdateCouponRequest $request, $id)
     {
         $coupon = Coupon::findOrFail($id);
@@ -200,6 +212,9 @@ class CouponController extends Controller
         ]);
     }
 
+    /**
+     * حذف كود الخصم وسجلات استخداماته من النظام
+     */
     public function destroy($id)
     {
         $coupon = Coupon::findOrFail($id);
@@ -211,6 +226,9 @@ class CouponController extends Controller
         ]);
     }
 
+    /**
+     * تفعيل أو إيقاف كود الخصم مؤقتاً في النظام
+     */
     public function toggleStatus(Request $request, $id)
     {
         $coupon = Coupon::findOrFail($id);
@@ -223,6 +241,9 @@ class CouponController extends Controller
         ]);
     }
 
+    /**
+     * تطبيق وحفظ عملية استخدام كود الخصم وحساب القيمة بعد التخفيض وتحديث العداد
+     */
     public function recordUsage(RecordCouponUsageRequest $request, $id)
     {
         $coupon = Coupon::findOrFail($id);

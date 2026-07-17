@@ -16,6 +16,9 @@ use Illuminate\Support\Str;
 
 class PackageOfferController extends Controller
 {
+    /**
+     * جلب قائمة الباقات والعروض (مع البحث والفلترة والترتيب والتصفح)
+     */
     public function index(Request $request)
     {
         $query = PackageOffer::withCount('tests');
@@ -88,6 +91,9 @@ class PackageOfferController extends Controller
 
     }
 
+    /**
+     * إضافة باقة أو عرض مخبري جديد مع التحاليل المشمولة
+     */
     public function store(StorePackageOfferRequest $request)
     {
         $validated = $request->validated();
@@ -107,6 +113,9 @@ class PackageOfferController extends Controller
         ], 201);
     }
 
+    /**
+     * عرض تفاصيل باقة مخبرية محددة مع التحاليل التابعة لها
+     */
     public function show($id)
     {
         $packageOffer = PackageOffer::with('tests')->findOrFail($id);
@@ -118,6 +127,9 @@ class PackageOfferController extends Controller
         ]);
     }
 
+    /**
+     * تحديث بيانات الباقة أو العرض المخبري والتحاليل المرتبطة به
+     */
     public function update(UpdatePackageOfferRequest $request, $id)
     {
         $packageOffer = PackageOffer::findOrFail($id);
@@ -138,6 +150,9 @@ class PackageOfferController extends Controller
         ]);
     }
 
+    /**
+     * حذف باقة أو عرض مخبري من النظام
+     */
     public function destroy($id)
     {
         $packageOffer = PackageOffer::findOrFail($id);
@@ -149,6 +164,9 @@ class PackageOfferController extends Controller
         ]);
     }
 
+    /**
+     * تفعيل أو تعطيل ظهور الباقة المخبرية في تطبيق المراجعين
+     */
     public function toggleStatus(Request $request, $id)
     {
         $packageOffer = PackageOffer::findOrFail($id);
@@ -161,6 +179,9 @@ class PackageOfferController extends Controller
         ]);
     }
 
+    /**
+     * تفعيل أو إيقاف قسم العروض والباقات بالكامل في التطبيق (Global Switch)
+     */
     public function toggleGlobalSection(Request $request)
     {
         $isActive = $request->boolean('is_active');
@@ -173,6 +194,9 @@ class PackageOfferController extends Controller
         ]);
     }
 
+    /**
+     * جلب قائمة كافة التحاليل المخبرية النشطة لاختيارها عند إنشاء باقة جديدة
+     */
     public function availableTests(Request $request)
     {
         $query = MedicalTest::query()
@@ -199,6 +223,9 @@ class PackageOfferController extends Controller
         ]);
     }
 
+    /**
+     * رفع صورة الباقة أو العرض المخبري وإرجاع رابط الصورة
+     */
     public function uploadImage(UploadPackageImageRequest $request)
     {
         if ($request->hasFile('image')) {
