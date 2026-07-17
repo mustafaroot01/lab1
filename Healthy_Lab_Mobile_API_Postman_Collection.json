@@ -1,0 +1,414 @@
+{
+  "info": {
+    "_postman_id": "c1f72c3c-41ef-4cc5-ad70-e22b1c24bb43",
+    "name": "Healthy Lab — Mobile App API Collection (Flutter Ready v1.0)",
+    "description": "مجموعة بوست مان المتكاملة لاختبار كافة واجهات تطبيق المريض (Flutter Mobile App API) مع سكربتات فحص أوتوماتيكية (Automated Tests) وحفظ التوكن تلقائياً.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8001/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication & Onboarding (المصادقة والتسجيل)",
+      "item": [
+        {
+          "name": "Send OTP (إرسال رمز التحقق)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"07700000000\",\n  \"agreed_to_terms\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mobile/auth/send-otp",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "auth", "send-otp"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Response status is true', function () { pm.expect(jsonData.status).to.eql(true); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify OTP & Get Token (التحقق وحفظ التوكن أوتوماتيكياً)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"07700000000\",\n  \"otp_code\": \"1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mobile/auth/verify-otp",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "auth", "verify-otp"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Token received', function () { pm.expect(jsonData.token).to.be.a('string'); });",
+                  "if (jsonData.token) { pm.collectionVariables.set('token', jsonData.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete Profile (إكمال الملف الشخصي)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"أحمد محمد علي\",\n  \"gender\": \"male\",\n  \"birth_date\": \"1992-04-10\",\n  \"district_id\": 1,\n  \"area_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mobile/auth/complete-profile",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "auth", "complete-profile"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User Profile (جلب بياناتي)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mobile/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout (تسجيل الخروج)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mobile/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Delete Account Request (طلب حذف الحساب)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mobile/auth/delete-account",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "auth", "delete-account"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Catalog, Packages & Search (الكتالوج والبحث والباقات)",
+      "item": [
+        {
+          "name": "Get Banners (البنرات الإعلانية)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/banners",
+              "host": ["{{base_url}}"],
+              "path": ["banners"]
+            }
+          }
+        },
+        {
+          "name": "Get Full Catalog (الكتالوج الشامل والمجموعات)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/mobile/catalog",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "catalog"]
+            }
+          }
+        },
+        {
+          "name": "Search Tests & Packages (البحث الفوري)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/mobile/search?q=CBC",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "search"],
+              "query": [{ "key": "q", "value": "CBC" }]
+            }
+          }
+        },
+        {
+          "name": "Get Packages List (قائمة الباقات)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/mobile/packages",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "packages"]
+            }
+          }
+        },
+        {
+          "name": "Get Package Details (تفاصيل باقة محددة)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/mobile/packages/1",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "packages", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Test Details (تفاصيل تحليل محدد)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/mobile/tests/1",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "tests", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Cart & Checkout Preview (السلة وحساب التكلفة)",
+      "item": [
+        {
+          "name": "Preview Cart (معاينة السلة وحساب المجموع)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subtotal\": 50000,\n  \"branch_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mobile/cart/preview",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "cart", "preview"]
+            }
+          }
+        },
+        {
+          "name": "Validate Coupon (التحقق من كوبون خصم)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"LAB2026\",\n  \"total_amount\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mobile/coupon/validate",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "coupon", "validate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Medical Records (السجل الطبي للمريض)",
+      "item": [
+        {
+          "name": "Get Medical Records (عرض السجل الطبي)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mobile/medical-records",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "medical-records"]
+            }
+          }
+        },
+        {
+          "name": "Add Chronic Disease (إضافة مرض مزمن)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"chronic_disease\",\n  \"disease_name\": \"ضغط الدم المزمن\",\n  \"severity\": \"medium\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mobile/medical-records",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "medical-records"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Orders & Tracking (الطلبات وسجل التتبع والنتائج)",
+      "item": [
+        {
+          "name": "Create Home Visit Order (إنشاء طلب زيارة)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"service_type\": \"home_visit\",\n  \"items\": [\n    { \"type\": \"test\", \"id\": 1 }\n  ],\n  \"visit_date\": \"2026-07-15\",\n  \"visit_time\": \"10:00 AM\",\n  \"address_details\": \"بغداد - الكرادة\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mobile/orders",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Get My Orders (سجل طلباتي)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mobile/orders",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Get Order Details + Results + Timeline (تفاصيل الطلب والنتائج)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mobile/orders/1",
+              "host": ["{{base_url}}"],
+              "path": ["mobile", "orders", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Support & Legal (الدعم والصفحات القانونية)",
+      "item": [
+        {
+          "name": "Get Legal Pages (الشروط والأحكام والخصوصية)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/legal-pages",
+              "host": ["{{base_url}}"],
+              "path": ["legal-pages"]
+            }
+          }
+        },
+        {
+          "name": "Get FAQs (الأسئلة الشائعة)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/faqs",
+              "host": ["{{base_url}}"],
+              "path": ["faqs"]
+            }
+          }
+        },
+        {
+          "name": "Get Contact Info (معلومات التواصل والدعم)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/contact-infos",
+              "host": ["{{base_url}}"],
+              "path": ["contact-infos"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

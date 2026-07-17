@@ -1,0 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+
+// Write your overrides
+:root, body, html, .v-application, .v-application [class*='text-'], .v-card, .v-btn, .v-chip, table, th, td, input, textarea, select, label, h1, h2, h3, h4, h5, h6, p, span, div, a {
+  font-family: 'Cairo', sans-serif !important;
+}
