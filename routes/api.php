@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\AreaController;
 use App\Http\Controllers\Api\OtpSettingController;
 use App\Http\Controllers\Api\GeneralSettingController;
 use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\FirebaseSettingController;
 
 // ─── راوتات عامة (يستهلكها تطبيق الموبايل بدون تسجيل دخول) ──────────────────────
 Route::get('medical-dictionary/patient-catalog', [\App\Http\Controllers\Api\V1\Admin\MedicalDictionary\MedicalTestController::class, 'patientCatalog']);
@@ -205,7 +206,11 @@ Route::prefix('mobile')->middleware('throttle:60,1')->group(function () {
         Route::post('/orders/upload-referral', [\App\Http\Controllers\Api\Mobile\ReferralController::class, 'uploadReferralImage']);
         Route::post('/orders', [\App\Http\Controllers\Api\Mobile\OrderController::class, 'store']);
         Route::get('/orders', [\App\Http\Controllers\Api\Mobile\OrderController::class, 'myOrders']);
-        Route::get('/orders/{id}', [\App\Http\Controllers\Api\Mobile\OrderController::class, 'show']);
+        Route::get('/orders/{id}', [\App\Http\Controllers\Api\V1\Patient\OrderController::class, 'show']);
+        
+        // Device Tokens (FCM)
+        Route::post('/device-token', [\App\Http\Controllers\Api\V1\Mobile\DeviceTokenController::class, 'store']);
+        Route::delete('/device-token', [\App\Http\Controllers\Api\V1\Mobile\DeviceTokenController::class, 'destroy']);
         Route::post('/orders/{id}/cancel', [\App\Http\Controllers\Api\Mobile\OrderController::class, 'cancel']);
     });
 });
@@ -216,6 +221,13 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [\App\Http\Controllers\Api\AdminAuthController::class, 'me']);
         Route::post('/logout', [\App\Http\Controllers\Api\AdminAuthController::class, 'logout']);
+        Route::get('/settings/system', [\App\Http\Controllers\Api\SystemSettingController::class, 'index']);
+        Route::post('/settings/system', [\App\Http\Controllers\Api\SystemSettingController::class, 'store']);
+
+        // Firebase Settings
+        Route::get('/settings/firebase', [FirebaseSettingController::class, 'getSettings']);
+        Route::post('/settings/firebase', [FirebaseSettingController::class, 'saveSettings']);
+        Route::post('/settings/firebase/test', [FirebaseSettingController::class, 'testNotification']);
     });
 });
 
@@ -263,6 +275,11 @@ Route::prefix('v1')->group(function () {
             Route::get('orders', [\App\Http\Controllers\Api\V1\Technician\TechnicianOrderController::class, 'myOrders']);
             Route::get('orders/{id}', [\App\Http\Controllers\Api\V1\Technician\TechnicianOrderController::class, 'show']);
             Route::patch('orders/{id}/status', [\App\Http\Controllers\Api\V1\Technician\TechnicianOrderController::class, 'updateStatus']);
+            Route::post('/orders/{id}/status', [\App\Http\Controllers\Api\V1\Technician\TechnicianOrderController::class, 'updateStatus']);
+
+            // Device Tokens (FCM)
+            Route::post('/device-token', [\App\Http\Controllers\Api\V1\Mobile\DeviceTokenController::class, 'store']);
+            Route::delete('/device-token', [\App\Http\Controllers\Api\V1\Mobile\DeviceTokenController::class, 'destroy']);
         });
     });
 

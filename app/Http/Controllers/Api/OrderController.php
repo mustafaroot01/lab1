@@ -12,6 +12,9 @@ use App\Models\OrderStatusLog;
 use App\Models\Technician;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Events\OrderStatusChanged;
+use App\Enums\NotificationType;
+
 
 class OrderController extends Controller
 {
@@ -123,6 +126,12 @@ class OrderController extends Controller
                 'changed_by_user_id' => $request->user()?->id,
                 'notes'              => !empty($notes) ? implode(' - ', $notes) : null,
             ]);
+
+            // Dispatch notification event
+            $notificationType = NotificationType::tryFrom($request->status);
+            if ($notificationType) {
+                event(new OrderStatusChanged($order, $notificationType));
+            }
         }
 
         $order->load(['patient.district', 'patient.area', 'branch', 'technician', 'coupon', 'items', 'statusLogs.changedBy', 'results']);
@@ -163,6 +172,9 @@ class OrderController extends Controller
             'changed_by_user_id' => $request->user()?->id,
             'notes'              => "تم رفع نتيجة تحليل للمراجع: {$fileName}",
         ]);
+
+        // Dispatch result ready notification
+        event(new OrderStatusChanged($order, NotificationType::RESULT_READY));
 
         $order->load(['patient.district', 'patient.area', 'branch', 'technician', 'coupon', 'items', 'statusLogs.changedBy', 'results']);
 

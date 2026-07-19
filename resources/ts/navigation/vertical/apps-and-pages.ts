@@ -114,4 +114,10 @@ export default [
     icon: { icon: 'tabler-lock-square' },
     to: 'settings-otp',
   },
+  {
+    title: 'إعدادات إشعارات فايربيس (FCM)',
+    icon: { icon: 'tabler-bell-ringing' },
+    to: 'settings-firebase',
+  },
 ]
+

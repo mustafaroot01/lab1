@@ -8,6 +8,9 @@ use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\OrderStatusLog;
 use Illuminate\Http\Request;
+use App\Events\OrderStatusChanged;
+use App\Enums\NotificationType;
+
 
 class TechnicianOrderController extends Controller
 {
@@ -127,6 +130,12 @@ class TechnicianOrderController extends Controller
             'changed_by_user_id' => null, // تم التغيير عبر الفني الميداني
             'notes'              => $request->notes ?: ("تم تحديث حالة الزيارة إلى: " . ($newStatus === 'on_the_way' ? 'الفني في الطريق للمراجع' : 'تم سحب العينة ميدانياً') . " بواسطة الفني: {$technician->name}"),
         ]);
+
+        // Dispatch notification event
+        $notificationType = NotificationType::tryFrom($newStatus);
+        if ($notificationType) {
+            event(new OrderStatusChanged($order, $notificationType));
+        }
 
         // تحميل العلاقات لمنع Lazy Loading Exceptions أثناء إرجاع الـ Resource
         $order->load([
