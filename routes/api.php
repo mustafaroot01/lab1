@@ -208,9 +208,11 @@ Route::prefix('mobile')->middleware('throttle:60,1')->group(function () {
         Route::get('/orders', [\App\Http\Controllers\Api\Mobile\OrderController::class, 'myOrders']);
         Route::get('/orders/{id}', [\App\Http\Controllers\Api\V1\Patient\OrderController::class, 'show']);
         
-        // Device Tokens (FCM)
+        // Device Tokens & Notifications (FCM)
         Route::post('/device-token', [\App\Http\Controllers\Api\V1\Mobile\DeviceTokenController::class, 'store']);
         Route::delete('/device-token', [\App\Http\Controllers\Api\V1\Mobile\DeviceTokenController::class, 'destroy']);
+        Route::get('/notifications', [\App\Http\Controllers\Api\V1\Mobile\NotificationController::class, 'index']);
+        Route::post('/notifications/read-all', [\App\Http\Controllers\Api\V1\Mobile\NotificationController::class, 'markAsRead']);
         Route::post('/orders/{id}/cancel', [\App\Http\Controllers\Api\Mobile\OrderController::class, 'cancel']);
     });
 });
@@ -277,9 +279,11 @@ Route::prefix('v1')->group(function () {
             Route::patch('orders/{id}/status', [\App\Http\Controllers\Api\V1\Technician\TechnicianOrderController::class, 'updateStatus']);
             Route::post('/orders/{id}/status', [\App\Http\Controllers\Api\V1\Technician\TechnicianOrderController::class, 'updateStatus']);
 
-            // Device Tokens (FCM)
+            // Device Tokens & Notifications (FCM)
             Route::post('/device-token', [\App\Http\Controllers\Api\V1\Mobile\DeviceTokenController::class, 'store']);
             Route::delete('/device-token', [\App\Http\Controllers\Api\V1\Mobile\DeviceTokenController::class, 'destroy']);
+            Route::get('/notifications', [\App\Http\Controllers\Api\V1\Mobile\NotificationController::class, 'index']);
+            Route::post('/notifications/read-all', [\App\Http\Controllers\Api\V1\Mobile\NotificationController::class, 'markAsRead']);
         });
     });
 
