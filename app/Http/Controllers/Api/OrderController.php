@@ -27,7 +27,7 @@ class OrderController extends Controller
                 'patient:id,name,phone,district_id,area_id',
                 'patient.district:id,name',
                 'patient.area:id,name',
-                'branch:id,name,phone',
+                'branch:id,name_ar,phone',
                 'technician:id,name,phone'
             ])
             ->withCount('items')
