@@ -44,9 +44,11 @@ class CancelOrderAction
                            ->delete();
             }
 
-            event(new \App\Events\OrderStatusChanged($order, \App\Enums\NotificationType::CANCELLED));
-
             return $order;
         });
+
+        event(new \App\Events\OrderStatusChanged($order, \App\Enums\NotificationType::CANCELLED));
+
+        return $order;
     }
 }
