@@ -6,14 +6,25 @@ interface District {
   name: string
 }
 
+interface ShiftSchedule {
+  is_active: boolean
+  times: string[]
+}
+
+interface DaySchedule {
+  key: string
+  label: string
+  is_working: boolean
+  shifts: Record<string, ShiftSchedule>
+}
+
 interface Branch {
   id: number
   name_ar: string
   address: string | null
   phone: string | null
   is_active: boolean
-  opens_at: string | null
-  closes_at: string | null
+  working_hours?: DaySchedule[]
   notes: string | null
   districts?: District[]
   created_at: string
@@ -42,6 +53,67 @@ const showToast = (text: string, color: 'success' | 'error' = 'success') => {
   snackbar.value = true
 }
 
+// أوقات العمل
+const getInitialShifts = () => ({
+  morning: { is_active: false, times: [] },
+  noon: { is_active: false, times: [] },
+  evening: { is_active: false, times: [] },
+})
+
+const getEmptyWorkingHours = (): DaySchedule[] => [
+  { key: 'saturday', label: 'السبت', is_working: true, shifts: getInitialShifts() },
+  { key: 'sunday', label: 'الأحد', is_working: true, shifts: getInitialShifts() },
+  { key: 'monday', label: 'الإثنين', is_working: true, shifts: getInitialShifts() },
+  { key: 'tuesday', label: 'الثلاثاء', is_working: true, shifts: getInitialShifts() },
+  { key: 'wednesday', label: 'الأربعاء', is_working: true, shifts: getInitialShifts() },
+  { key: 'thursday', label: 'الخميس', is_working: true, shifts: getInitialShifts() },
+  { key: 'friday', label: 'الجمعة', is_working: false, shifts: getInitialShifts() },
+]
+
+const workingHours = ref<DaySchedule[]>(getEmptyWorkingHours())
+
+const applyFirstDayTimesToAll = () => {
+  const firstActive = workingHours.value.find(d => d.is_working)
+  if (!firstActive) return
+  workingHours.value.forEach(d => {
+    if (d.is_working && d.key !== firstActive.key) {
+      d.shifts = JSON.parse(JSON.stringify(firstActive.shifts))
+    }
+  })
+}
+
+const getPeriodLabel = (period: string) => {
+  if (period === 'morning') return 'صباحاً'
+  if (period === 'noon') return 'ظهراً'
+  if (period === 'evening') return 'مساءً'
+  return ''
+}
+
+const getTimeSlotsForPeriod = (period: string) => {
+  const slots = []
+  if (period === 'morning') {
+    for (let h = 5; h <= 11; h++) {
+      const hour = h.toString().padStart(2, '0')
+      slots.push(`${hour}:00`, `${hour}:30`)
+    }
+  } else if (period === 'noon') {
+    for (let h = 12; h <= 16; h++) {
+      const hour = h.toString().padStart(2, '0')
+      slots.push(`${hour}:00`, `${hour}:30`)
+    }
+  } else if (period === 'evening') {
+    for (let h = 17; h <= 23; h++) {
+      const hour = h.toString().padStart(2, '0')
+      slots.push(`${hour}:00`, `${hour}:30`)
+    }
+    for (let h = 0; h <= 4; h++) {
+      const hour = h.toString().padStart(2, '0')
+      slots.push(`${hour}:00`, `${hour}:30`)
+    }
+  }
+  return slots
+}
+
 // Dialog الفرع
 const branchDialog = ref(false)
 const isEditing = ref(false)
@@ -51,8 +123,6 @@ const form = ref({
   name_ar: '',
   phone: '',
   address: '',
-  opens_at: '08:00',
-  closes_at: '22:00',
   district_ids: [] as number[],
   is_active: true,
   notes: '',
@@ -113,12 +183,11 @@ const openAddBranch = () => {
     name_ar: '',
     phone: '',
     address: '',
-    opens_at: '08:00',
-    closes_at: '22:00',
     district_ids: [],
     is_active: true,
     notes: '',
   }
+  workingHours.value = getEmptyWorkingHours()
   formErrors.value = {}
   branchDialog.value = true
 }
@@ -131,12 +200,11 @@ const openEditBranch = (branch: Branch) => {
     name_ar: branch.name_ar,
     phone: branch.phone || '',
     address: branch.address || '',
-    opens_at: branch.opens_at || '08:00',
-    closes_at: branch.closes_at || '22:00',
     district_ids: branch.districts?.map(d => d.id) || [],
     is_active: branch.is_active,
     notes: branch.notes || '',
   }
+  workingHours.value = branch.working_hours ? JSON.parse(JSON.stringify(branch.working_hours)) : getEmptyWorkingHours()
   formErrors.value = {}
   branchDialog.value = true
 }
@@ -153,6 +221,7 @@ const saveBranch = async () => {
       method,
       body: {
         ...form.value,
+        working_hours: workingHours.value,
         radius_km: 15, // القيمة الافتراضية لقاعدة البيانات
         coverage_type: 'circle',
       },
@@ -336,7 +405,7 @@ onMounted(fetchBranches)
             </VAvatar>
             <div>
               <div class="font-weight-bold text-body-1">{{ item.name_ar }}</div>
-              <div class="text-caption text-medium-emphasis">ساعات العمل: {{ item.opens_at || '08:00' }} - {{ item.closes_at || '22:00' }}</div>
+              <div class="text-caption text-medium-emphasis">يعمل وفق فترات مخصصة</div>
             </div>
           </div>
         </template>
@@ -453,20 +522,58 @@ onMounted(fetchBranches)
               />
             </VCol>
 
-            <VCol cols="12" sm="6">
-              <AppTextField
-                v-model="form.opens_at"
-                label="وقت الفتح"
-                placeholder="08:00"
-              />
-            </VCol>
+            <VCol cols="12">
+              <VCard variant="outlined" class="mb-2">
+                <VCardItem class="pb-2">
+                  <template #title>
+                    <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+                      <div class="d-flex align-center gap-2">
+                        <VIcon icon="tabler-clock" color="primary" size="20" />
+                        <span class="text-subtitle-1 font-weight-medium">أوقات العمل الأسبوعية</span>
+                      </div>
+                      <VBtn variant="text" color="primary" size="small" prepend-icon="tabler-copy" @click="applyFirstDayTimesToAll">
+                        تعميم
+                      </VBtn>
+                    </div>
+                  </template>
+                </VCardItem>
+                <VDivider />
+                <VCardText class="pt-2" style="max-height: 250px; overflow-y: auto;">
+                  <div v-for="(day, index) in workingHours" :key="day.key" class="py-2" :class="{ 'border-b': index < workingHours.length - 1 }">
+                    <div class="d-flex align-start flex-column gap-2">
+                      <div class="d-flex align-center justify-space-between w-100">
+                        <div class="d-flex align-center gap-2" style="min-inline-size: 110px;">
+                          <VCheckbox v-model="day.is_working" color="primary" hide-details density="compact" />
+                          <span class="font-weight-medium text-body-2">{{ day.label }}</span>
+                        </div>
+                        <div v-if="!day.is_working">
+                          <VChip color="error" variant="tonal" size="small">عطلة (مغلق)</VChip>
+                        </div>
+                      </div>
 
-            <VCol cols="12" sm="6">
-              <AppTextField
-                v-model="form.closes_at"
-                label="وقت الإغلاق"
-                placeholder="22:00"
-              />
+                      <div v-if="day.is_working" class="w-100 mt-1 px-4">
+                        <div v-for="period in ['morning', 'noon', 'evening']" :key="period" class="d-flex align-start gap-3 mb-1">
+                          <div style="min-inline-size: 80px;" class="mt-1">
+                            <VCheckbox v-model="day.shifts[period].is_active" :label="getPeriodLabel(period)" color="success" hide-details density="compact" />
+                          </div>
+                          <div class="flex-grow-1" v-if="day.shifts[period].is_active">
+                            <AppSelect
+                              v-model="day.shifts[period].times"
+                              :items="getTimeSlotsForPeriod(period)"
+                              multiple
+                              chips
+                              closable-chips
+                              density="compact"
+                              placeholder="اختر الساعات المتاحة للحجز"
+                              hide-details
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </VCardText>
+              </VCard>
             </VCol>
 
             <VCol cols="12">

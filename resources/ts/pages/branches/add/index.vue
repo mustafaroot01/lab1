@@ -252,7 +252,10 @@ const submitBranch = async () => {
       errorMessage.value = res.message || 'حدث خطأ أثناء حفظ الفرع'
     }
   } catch (e: any) {
-    if (e?.errors) validationErrors.value = e.errors
+    if (e?.errors) {
+      validationErrors.value = e.errors
+      errorMessage.value = 'توجد أخطاء في البيانات، يرجى المراجعة: ' + Object.keys(e.errors).join(', ')
+    }
     else errorMessage.value = e?.message || 'تعذر الاتصال بالخادم'
   } finally {
     loading.value = false
