@@ -381,6 +381,83 @@
 * **تحديد الرسائل كمقروءة:** `POST /api/mobile/chat/read` (`Bearer Token`)
 * **سجل المحادثات السابقة:** `GET /api/mobile/chat/history` (`Bearer Token`)
 
+## 6. إدارة الإشعارات وأجهزة البث (Push Notifications & FCM)
+تُستخدم هذه الواجهات لربط جهاز المريض (موبايل/تابلت) بنظام Firebase لاستقبال إشعارات بتحديثات الطلب (مثل: الفني في الطريق، تم صدور النتائج).
+
+### 6.1 تسجيل أو تحديث توكن الجهاز (Register/Update Device Token)
+يجب استدعاء هذا الرابط في كل مرة يفتح فيها المريض التطبيق لضمان بقاء الـ Token حديثاً.
+* **الرابط:** `POST /api/mobile/device-token` (أو `POST /api/v1/patient/device-token` حسب الـ prefix المستخدم)
+* **الحماية:** يتطلب توكن (`Bearer Token`)
+* **جسم الطلب (Request Body):**
+  ```json
+  {
+    "fcm_token": "eX_K1xyz...",
+    "device_name": "iPhone 14 Pro" // اختياري
+  }
+  ```
+* **الرد الناجح (200 OK):**
+  ```json
+  {
+    "status": true,
+    "message": "تم حفظ رمز الجهاز بنجاح لاستقبال الإشعارات"
+  }
+  ```
+
+### 6.2 إزالة توكن الجهاز عند تسجيل الخروج (Remove Device Token)
+* **الرابط:** `DELETE /api/mobile/device-token`
+* **الحماية:** يتطلب توكن (`Bearer Token`)
+* **جسم الطلب (Request Body):**
+  ```json
+  {
+    "fcm_token": "eX_K1xyz..."
+  }
+  ```
+* **الرد الناجح (200 OK):**
+  ```json
+  {
+    "status": true,
+    "message": "تم إزالة رمز الجهاز ولن يتلقى إشعارات بعد الآن"
+  }
+  ```
+
+### 6.3 جلب سجل الإشعارات (Notification History)
+يجلب قائمة الإشعارات السابقة التي استلمها المريض داخل التطبيق.
+* **الرابط:** `GET /api/mobile/notifications?page=1`
+* **الحماية:** يتطلب توكن (`Bearer Token`)
+* **الرد الناجح (200 OK):**
+  ```json
+  {
+    "status": true,
+    "message": "تم جلب الإشعارات بنجاح",
+    "notifications": [
+      {
+        "id": "abc-123-xyz",
+        "title": "الفني في الطريق!",
+        "body": "الفني يوسف أحمد في الطريق إليك لسحب العينة.",
+        "type": "order_status_changed",
+        "data": {
+          "order_id": 105,
+          "status": "on_the_way"
+        },
+        "is_read": false,
+        "created_at": "2026-07-20 10:15:00"
+      }
+    ],
+    "meta": { "current_page": 1, "total": 5, "last_page": 1 }
+  }
+  ```
+
+### 6.4 تحديد جميع الإشعارات كمقروءة (Mark All as Read)
+* **الرابط:** `POST /api/mobile/notifications/read-all`
+* **الحماية:** يتطلب توكن (`Bearer Token`)
+* **الرد الناجح (200 OK):**
+  ```json
+  {
+    "status": true,
+    "message": "تم تحديد جميع الإشعارات كمقروءة"
+  }
+  ```
+
 ---
 ---
 
@@ -532,6 +609,61 @@
         "...": "..."
       }
     }
+  }
+  ```
+
+## 3. إدارة الإشعارات للفني الميداني (Technician Notifications & FCM)
+تُستخدم لاستقبال تنبيهات فورية عندما تسند إدارة المختبر طلباً جديداً للفني، أو يتم إلغاء طلب.
+
+### 3.1 تسجيل توكن جهاز الفني (Register Device Token)
+يجب استدعاؤه فور تسجيل دخول الفني للتطبيق.
+* **الرابط:** `POST /api/v1/technician/device-token`
+* **الحماية:** يتطلب توكن الفني (`Bearer Token`)
+* **جسم الطلب (Request Body):**
+  ```json
+  {
+    "fcm_token": "eX_K1xyz...",
+    "device_name": "Galaxy S23 Ultra" // اختياري
+  }
+  ```
+* **الرد الناجح (200 OK):**
+  ```json
+  {
+    "status": true,
+    "message": "تم حفظ رمز الجهاز بنجاح لاستقبال الإشعارات"
+  }
+  ```
+
+### 3.2 إزالة التوكن عند الخروج (Remove Device Token)
+* **الرابط:** `DELETE /api/v1/technician/device-token`
+* **الحماية:** يتطلب توكن الفني (`Bearer Token`)
+* **جسم الطلب (Request Body):**
+  ```json
+  {
+    "fcm_token": "eX_K1xyz..."
+  }
+  ```
+* **الرد الناجح (200 OK):**
+  ```json
+  {
+    "status": true,
+    "message": "تم إزالة رمز الجهاز ولن يتلقى إشعارات بعد الآن"
+  }
+  ```
+
+### 3.3 جلب سجل إشعارات الفني (Notification History)
+* **الرابط:** `GET /api/v1/technician/notifications?page=1`
+* **الحماية:** يتطلب توكن الفني (`Bearer Token`)
+* **الرد الناجح (200 OK):** يرجع قائمة الإشعارات المهيكلة تماماً كما في مسار المريض (مشروحة في القسم 6.3 أعلاه).
+
+### 3.4 تحديد الإشعارات كمقروءة (Mark as Read)
+* **الرابط:** `POST /api/v1/technician/notifications/read-all`
+* **الحماية:** يتطلب توكن الفني (`Bearer Token`)
+* **الرد الناجح (200 OK):**
+  ```json
+  {
+    "status": true,
+    "message": "تم تحديد جميع الإشعارات كمقروءة"
   }
   ```
 
