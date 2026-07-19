@@ -133,6 +133,13 @@ Route::prefix('settings/general')->group(function () {
     Route::match(['post', 'put'], '/', [GeneralSettingController::class, 'update']);
 });
 
+// Firebase Settings
+Route::prefix('settings/firebase')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\FirebaseSettingController::class, 'getSettings']);
+    Route::post('/', [\App\Http\Controllers\Api\FirebaseSettingController::class, 'saveSettings']);
+    Route::post('/test', [\App\Http\Controllers\Api\FirebaseSettingController::class, 'testNotification']);
+});
+
 // Patients — إدارة المرضى والزبائن المسجلين وسجلاتهم الطبية
 Route::apiResource('patients', PatientController::class);
 Route::patch('patients/{patient}/toggle-status', [PatientController::class, 'toggleStatus']);
@@ -225,11 +232,6 @@ Route::prefix('auth')->group(function () {
         Route::post('/logout', [\App\Http\Controllers\Api\AdminAuthController::class, 'logout']);
         Route::get('/settings/system', [\App\Http\Controllers\Api\SystemSettingController::class, 'index']);
         Route::post('/settings/system', [\App\Http\Controllers\Api\SystemSettingController::class, 'store']);
-
-        // Firebase Settings
-        Route::get('/settings/firebase', [FirebaseSettingController::class, 'getSettings']);
-        Route::post('/settings/firebase', [FirebaseSettingController::class, 'saveSettings']);
-        Route::post('/settings/firebase/test', [FirebaseSettingController::class, 'testNotification']);
     });
 });
 
