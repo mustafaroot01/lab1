@@ -35,9 +35,18 @@ class NotificationDispatcher
             return;
         }
 
-        // 3. Send via Firebase
-        $firebaseChannel = new FirebaseChannel();
-        $success = $firebaseChannel->send($tokens, $title, $body, $payload);
+        // 3. Send via Firebase (if enabled)
+        $firebaseEnabled = \App\Models\SystemSetting::getBoolean('firebase_enabled', false);
+        $success = false;
+
+        if ($firebaseEnabled) {
+            $firebaseChannel = new FirebaseChannel();
+            $success = $firebaseChannel->send($tokens, $title, $body, $payload);
+        } else {
+            // Treat as "sent" internally for the database if push is disabled globally, 
+            // so the user still gets the in-app history without errors.
+            $success = true;
+        }
 
         // 4. Update status
         $appNotification->update([

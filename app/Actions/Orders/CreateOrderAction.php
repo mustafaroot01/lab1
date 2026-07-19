@@ -177,6 +177,7 @@ class CreateOrderAction
         $order->load(['items', 'branch', 'coupon']);
 
         event(new \App\Events\OrderCreated($order));
+        event(new \App\Events\OrderStatusChanged($order, \App\Enums\NotificationType::PENDING));
 
         return $order;
     }
