@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Branches\CheckCoverageRequest;
 use App\Http\Requests\StoreBranchRequest;
 use App\Http\Requests\UpdateBranchRequest;
 use App\Http\Resources\BranchResource;
@@ -147,89 +146,4 @@ class BranchController extends Controller
         ]);
     }
 
-    /**
-     * التحقق من تغطية موقع معين (للتطبيق)
-     * POST /api/check-coverage
-     * Body: { lat: float, lng: float }
-     */
-    public function checkCoverage(CheckCoverageRequest $request)
-    {
-        // 1. الفحص المباشر عبر القضاء (District) — وهو الأساس المعتمد عندما يكون المختبر مرتبطاً مباشرة بالقضاء
-        if ($request->filled('district_id')) {
-            $district = \App\Models\District::with('branch')->where('id', $request->district_id)->where('is_active', true)->first();
-
-            if ($district) {
-                // الفرع المرتبط بالقضاء أو المختبر الوحيد النشط في النظام
-                $branch = $district->branch ?? Branch::where('is_active', true)->first();
-
-                return response()->json([
-                    'status'   => true,
-                    'covered'  => true,
-                    'message'  => 'الخدمة متوفرة في القضاء المختار (' . $district->name . ')',
-                    'district' => [
-                        'id'             => $district->id,
-                        'name'           => $district->name,
-                        'service_fee'    => $district->service_fee ?? ($branch?->service_fee ?? 0),
-                        'free_threshold' => $district->free_threshold ?? ($branch?->free_threshold ?? 0),
-                    ],
-                    'branch'   => $branch ? new BranchResource($branch) : null,
-                ]);
-            }
-
-            return response()->json([
-                'status'  => true,
-                'covered' => false,
-                'message' => 'عذراً، الخدمة غير متوفرة حالياً في هذا القضاء أو تم إيقافها مؤقتاً.',
-            ]);
-        }
-
-        // 2. الفحص عبر الإحداثيات (في حال تم تمرير lat و lng بدلاً من القضاء)
-        if ($request->filled('lat') && $request->filled('lng')) {
-            $lat = (float) $request->input('lat');
-            $lng = (float) $request->input('lng');
-
-            $activeBranches = Branch::where('is_active', true)
-                ->whereNotNull('lat')
-                ->whereNotNull('lng')
-                ->get();
-
-            $coveredBranch = null;
-            $minDistance = PHP_FLOAT_MAX;
-
-            foreach ($activeBranches as $branch) {
-                $distance = $branch->haversineDistance($lat, $lng);
-                if ($branch->coversLocation($lat, $lng) && $distance < $minDistance) {
-                    $minDistance = $distance;
-                    $coveredBranch = $branch;
-                    $coveredBranch->distance_km = $distance;
-                }
-            }
-
-            // إذا لم يتم تحديد إحداثيات للفرع وكان يوجد مختبر واحد نشط فقط في النظام، نرجع التغطية بنجاح
-            if (!$coveredBranch && Branch::where('is_active', true)->count() === 1) {
-                $singleBranch = Branch::where('is_active', true)->first();
-                return response()->json([
-                    'status'  => true,
-                    'covered' => true,
-                    'message' => 'الخدمة متوفرة في منطقتك من خلال المختبر الرئيسي',
-                    'branch'  => new BranchResource($singleBranch),
-                ]);
-            }
-
-            if ($coveredBranch) {
-                return response()->json([
-                    'status'  => true,
-                    'covered' => true,
-                    'message' => 'الخدمة متوفرة في منطقتك',
-                    'branch'  => new BranchResource($coveredBranch),
-                ]);
-            }
-        }
-
-        return response()->json([
-            'status'  => true,
-            'covered' => false,
-            'message' => 'عذراً، يرجى اختيار القضاء للتحقق من توفر الخدمة أو الخدمة غير متوفرة في موقعك حالياً.',
-        ]);
-    }
 }

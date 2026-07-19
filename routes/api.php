@@ -20,7 +20,6 @@ use App\Http\Controllers\Api\FirebaseSettingController;
 
 // ─── راوتات عامة (يستهلكها تطبيق الموبايل بدون تسجيل دخول) ──────────────────────
 Route::get('medical-dictionary/patient-catalog', [\App\Http\Controllers\Api\V1\Admin\MedicalDictionary\MedicalTestController::class, 'patientCatalog']);
-Route::post('check-coverage', [BranchController::class, 'checkCoverage']);
 Route::apiResource('banners', BannerController::class)->only(['index', 'show']);
 Route::apiResource('faqs', FaqController::class)->only(['index', 'show']);
 Route::apiResource('legal-pages', LegalPageController::class)->only(['index', 'show']);
