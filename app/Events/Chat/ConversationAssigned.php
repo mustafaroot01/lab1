@@ -44,7 +44,7 @@ class ConversationAssigned implements ShouldBroadcastNow
      */
     public function broadcastWith(): array
     {
-        $this->conversation->loadMissing(['patient:id,name,phone,district_id,area_id', 'patient.district:id,name_ar', 'patient.area:id,name_ar', 'assignedTo:id,name']);
+        $this->conversation->loadMissing(['patient:id,name,phone,district_id,area_id', 'patient.district:id,name', 'patient.area:id,name', 'assignedTo:id,name']);
 
         return [
             'conversation' => (new ConversationResource($this->conversation))->resolve(),

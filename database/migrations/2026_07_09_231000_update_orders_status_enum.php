@@ -24,6 +24,12 @@ return new class extends Migration
             DB::table('orders')->where('id', $order->id)->update(['status_new' => $newStatus]);
         });
 
+        // إسقاط الفهارس المرتبطة بعمود status قبل حذفه (إلزامي على SQLite)
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropIndex(['user_id', 'status']);
+            $table->dropIndex(['status', 'created_at']);
+        });
+
         // حذف العمود القديم وإعادة تسمية الجديد
         Schema::table('orders', function (Blueprint $table) {
             $table->dropColumn('status');
@@ -31,6 +37,12 @@ return new class extends Migration
 
         Schema::table('orders', function (Blueprint $table) {
             $table->renameColumn('status_new', 'status');
+        });
+
+        // إعادة بناء الفهارس بعد إعادة تسمية العمود
+        Schema::table('orders', function (Blueprint $table) {
+            $table->index(['user_id', 'status']);
+            $table->index(['status', 'created_at']);
         });
     }
 

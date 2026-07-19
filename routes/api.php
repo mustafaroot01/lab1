@@ -198,6 +198,7 @@ Route::prefix('mobile')->middleware('throttle:60,1')->group(function () {
     Route::get('/packages/{id}', [\App\Http\Controllers\Api\Mobile\PackageController::class, 'packageDetails']);
     Route::post('/cart/preview', [\App\Http\Controllers\Api\Mobile\CartController::class, 'previewCart']);
     Route::post('/coupon/validate', [\App\Http\Controllers\Api\Mobile\CouponController::class, 'validateCoupon']);
+    Route::get('/branches/{branch}/availability', \App\Http\Controllers\Api\Mobile\BranchAvailabilityController::class);
 
     // يتطلب تسجيل دخول
     Route::middleware(['auth:sanctum', 'patient.active'])->group(function () {
@@ -219,6 +220,11 @@ Route::prefix('auth')->group(function () {
 });
 
 // ─── Chat Module — موديول الدردشة (معزول معمارياً في مجلد Modules/Chat) ─────────
+// تقديم مرفقات الدردشة من القرص الخاص عبر رابط موقّت موقّع (30 دقيقة) — يمنع الوصول العام
+Route::get('chat/attachments/{message}', [\App\Http\Controllers\Api\ChatAttachmentController::class, 'show'])
+    ->middleware('signed')
+    ->name('chat.attachment');
+
 // راوتات الموبايل (المريض)
 Route::prefix('mobile/chat')->middleware('throttle:30,1')->group(function () {
     Route::middleware(['auth:sanctum', 'patient.active'])->group(function () {

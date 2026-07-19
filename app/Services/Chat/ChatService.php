@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\Storage;
 
 class ChatService
 {
-    private const ATTACHMENT_DISK = 'public';
+    // قرص خاص (storage/app/private) — المرفقات الطبية لا تُكشف للعامة وتُقدَّم عبر رابط موقّع فقط
+    private const ATTACHMENT_DISK = 'local';
 
     /**
      * إرسال رسالة (نص و/أو مرفق) داخل محادثة من طرف مُرسِل محدد.
@@ -32,10 +33,15 @@ class ChatService
         // تخزين المرفق خارج الـ transaction (عملية I/O بطيئة)
         $attachmentData = $attachment ? $this->storeAttachment($conversation, $attachment) : [];
 
-        $message = DB::transaction(function () use ($conversation, $sender, $body, $isSystem, $attachment, $attachmentData) {
+        $senderType = ($sender instanceof \App\Models\Admin || in_array($sender->role ?? null, ['admin', 'super_admin'], true))
+            ? Message::SENDER_ADMIN
+            : Message::SENDER_PATIENT;
+
+        $message = DB::transaction(function () use ($conversation, $sender, $senderType, $body, $isSystem, $attachment, $attachmentData) {
             $message = Message::create(array_merge([
                 'conversation_id' => $conversation->id,
                 'sender_id'       => $sender->id,
+                'sender_type'     => $senderType,
                 'is_system'       => $isSystem,
                 'body'            => $body,
             ], $attachmentData));

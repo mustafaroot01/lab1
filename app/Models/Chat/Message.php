@@ -12,9 +12,13 @@ class Message extends Model
 {
     use SoftDeletes;
 
+    public const SENDER_ADMIN   = 'admin';
+    public const SENDER_PATIENT = 'patient';
+
     protected $fillable = [
         'conversation_id',
         'sender_id',
+        'sender_type',
         'is_system',
         'body',
         'attachment_disk',
@@ -52,35 +56,24 @@ class Message extends Model
 
     public function getSenderAttribute()
     {
-        if ($this->relationLoaded('senderAdmin') && $this->senderAdmin) {
-            return $this->senderAdmin;
-        }
-        if ($this->relationLoaded('senderPatient') && $this->senderPatient) {
-            return $this->senderPatient;
-        }
-        if ($this->relationLoaded('conversation') && $this->conversation) {
-            $patientId = $this->conversation->patient_id ?: $this->conversation->user_id;
-            if ($patientId && (int) $this->sender_id === (int) $patientId) {
-                return $this->senderPatient;
-            }
-        }
-        return $this->senderAdmin;
+        return $this->isFromAdmin() ? $this->senderAdmin : $this->senderPatient;
     }
 
     public function isFromAdmin(): bool
     {
-        if ($this->relationLoaded('senderAdmin') && $this->senderAdmin) {
-            return true;
+        // المصدر الموثوق: العمود الصريح sender_type
+        if ($this->sender_type !== null) {
+            return $this->sender_type === self::SENDER_ADMIN;
         }
-        if ($this->relationLoaded('senderPatient') && $this->senderPatient) {
-            return false;
-        }
+
+        // fallback للبيانات القديمة قبل ترحيل sender_type: التمييز عبر مالك المحادثة
         if ($this->relationLoaded('conversation') && $this->conversation) {
             $patientId = $this->conversation->patient_id ?: $this->conversation->user_id;
             if ($patientId && (int) $this->sender_id === (int) $patientId) {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -94,6 +87,11 @@ class Message extends Model
         if (!$this->attachment_path)
             return null;
 
-        return \Illuminate\Support\Facades\Storage::disk($this->attachment_disk ?: 'public')->url($this->attachment_path);
+        // رابط موقّت موقّع (صالح 30 دقيقة) لعرض المرفق الطبي من القرص الخاص دون كشفه للعامة
+        return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'chat.attachment',
+            now()->addMinutes(30),
+            ['message' => $this->id]
+        );
     }
 }

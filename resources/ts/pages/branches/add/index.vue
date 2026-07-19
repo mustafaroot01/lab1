@@ -14,33 +14,49 @@ const lat = ref<number | null>(null)
 const lng = ref<number | null>(null)
 
 // Weekly Working Hours per day
+interface ShiftSchedule {
+  is_active: boolean
+  times: string[]
+}
+
 interface DaySchedule {
   key: string
   label: string
   is_working: boolean
-  opens_at: string
-  closes_at: string
+  shifts: Record<string, ShiftSchedule>
 }
 
+const getInitialShifts = () => ({
+  morning: { is_active: false, times: [] },
+  noon: { is_active: false, times: [] },
+  evening: { is_active: false, times: [] },
+})
+
 const workingHours = ref<DaySchedule[]>([
-  { key: 'saturday', label: 'السبت', is_working: true, opens_at: '08:00', closes_at: '22:00' },
-  { key: 'sunday', label: 'الأحد', is_working: true, opens_at: '08:00', closes_at: '22:00' },
-  { key: 'monday', label: 'الإثنين', is_working: true, opens_at: '08:00', closes_at: '22:00' },
-  { key: 'tuesday', label: 'الثلاثاء', is_working: true, opens_at: '08:00', closes_at: '22:00' },
-  { key: 'wednesday', label: 'الأربعاء', is_working: true, opens_at: '08:00', closes_at: '22:00' },
-  { key: 'thursday', label: 'الخميس', is_working: true, opens_at: '08:00', closes_at: '22:00' },
-  { key: 'friday', label: 'الجمعة', is_working: false, opens_at: '08:00', closes_at: '22:00' },
+  { key: 'saturday', label: 'السبت', is_working: true, shifts: getInitialShifts() },
+  { key: 'sunday', label: 'الأحد', is_working: true, shifts: getInitialShifts() },
+  { key: 'monday', label: 'الإثنين', is_working: true, shifts: getInitialShifts() },
+  { key: 'tuesday', label: 'الثلاثاء', is_working: true, shifts: getInitialShifts() },
+  { key: 'wednesday', label: 'الأربعاء', is_working: true, shifts: getInitialShifts() },
+  { key: 'thursday', label: 'الخميس', is_working: true, shifts: getInitialShifts() },
+  { key: 'friday', label: 'الجمعة', is_working: false, shifts: getInitialShifts() },
 ])
 
 const applyFirstDayTimesToAll = () => {
   const firstActive = workingHours.value.find(d => d.is_working)
   if (!firstActive) return
   workingHours.value.forEach(d => {
-    if (d.is_working) {
-      d.opens_at = firstActive.opens_at
-      d.closes_at = firstActive.closes_at
+    if (d.is_working && d.key !== firstActive.key) {
+      d.shifts = JSON.parse(JSON.stringify(firstActive.shifts))
     }
   })
+}
+
+const getPeriodLabel = (period: string) => {
+  if (period === 'morning') return 'صباحاً'
+  if (period === 'noon') return 'ظهراً'
+  if (period === 'evening') return 'مساءً'
+  return ''
 }
 
 // Polygon points
@@ -456,37 +472,46 @@ onBeforeUnmount(() => {
               class="py-2"
               :class="{ 'border-b': index < workingHours.length - 1 }"
             >
-              <div class="d-flex align-center justify-space-between flex-wrap gap-2">
-                <!-- Day Toggle -->
-                <div class="d-flex align-center gap-2" style="min-inline-size: 110px;">
-                  <VCheckbox
-                    v-model="day.is_working"
-                    color="primary"
-                    hide-details
-                    density="compact"
-                  />
-                  <span class="font-weight-medium text-body-2">{{ day.label }}</span>
+              <div class="d-flex align-start flex-column gap-2">
+                <div class="d-flex align-center justify-space-between w-100">
+                  <div class="d-flex align-center gap-2" style="min-inline-size: 110px;">
+                    <VCheckbox
+                      v-model="day.is_working"
+                      color="primary"
+                      hide-details
+                      density="compact"
+                    />
+                    <span class="font-weight-medium text-body-2">{{ day.label }}</span>
+                  </div>
+                  <div v-if="!day.is_working">
+                    <VChip color="error" variant="tonal" size="small">عطلة (مغلق)</VChip>
+                  </div>
                 </div>
 
-                <!-- Time Inputs or Closed Badge -->
-                <div v-if="day.is_working" class="d-flex align-center gap-2">
-                  <input
-                    v-model="day.opens_at"
-                    type="time"
-                    class="px-2 py-1 rounded border text-body-2 font-monospace"
-                    style="background: transparent; color: inherit; border-color: rgba(var(--v-border-color), var(--v-border-opacity)) !important;"
-                  >
-                  <span class="text-caption text-medium-emphasis">إلى</span>
-                  <input
-                    v-model="day.closes_at"
-                    type="time"
-                    class="px-2 py-1 rounded border text-body-2 font-monospace"
-                    style="background: transparent; color: inherit; border-color: rgba(var(--v-border-color), var(--v-border-opacity)) !important;"
-                  >
-                </div>
-
-                <div v-else>
-                  <VChip color="error" variant="tonal" size="small">عطلة (مغلق)</VChip>
+                <!-- Shifts Config -->
+                <div v-if="day.is_working" class="w-100 mt-2 px-6">
+                  <div v-for="period in ['morning', 'noon', 'evening']" :key="period" class="d-flex align-start gap-4 mb-2">
+                    <div style="min-inline-size: 80px;" class="mt-1">
+                      <VCheckbox 
+                        v-model="day.shifts[period].is_active" 
+                        :label="getPeriodLabel(period)" 
+                        color="success"
+                        hide-details 
+                        density="compact" 
+                      />
+                    </div>
+                    <div class="flex-grow-1" v-if="day.shifts[period].is_active">
+                      <VCombobox
+                        v-model="day.shifts[period].times"
+                        chips
+                        multiple
+                        closable-chips
+                        density="compact"
+                        placeholder="اكتب الوقت واضغط Enter (مثال: 08:30)"
+                        hide-details
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

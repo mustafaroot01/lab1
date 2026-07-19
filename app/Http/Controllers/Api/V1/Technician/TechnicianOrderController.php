@@ -22,8 +22,8 @@ class TechnicianOrderController extends Controller
         $query = $technician->orders()
             ->with([
                 'patient:id,name,phone,district_id,area_id',
-                'patient.district:id,name_ar',
-                'patient.area:id,name_ar',
+                'patient.district:id,name',
+                'patient.area:id,name',
                 'branch:id,name_ar',
                 'technician:id,name',
                 'items',
@@ -68,8 +68,8 @@ class TechnicianOrderController extends Controller
             ->where('id', $id)
             ->with([
                 'patient:id,name,phone,district_id,area_id',
-                'patient.district:id,name_ar',
-                'patient.area:id,name_ar',
+                'patient.district:id,name',
+                'patient.area:id,name',
                 'branch:id,name_ar',
                 'technician:id,name,phone',
                 'coupon:id,code',
@@ -131,8 +131,8 @@ class TechnicianOrderController extends Controller
         // تحميل العلاقات لمنع Lazy Loading Exceptions أثناء إرجاع الـ Resource
         $order->load([
             'patient:id,name,phone,district_id,area_id',
-            'patient.district:id,name_ar',
-            'patient.area:id,name_ar',
+            'patient.district:id,name',
+            'patient.area:id,name',
             'branch:id,name_ar',
             'technician:id,name,phone',
             'items',

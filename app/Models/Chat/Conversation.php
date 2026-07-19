@@ -61,25 +61,23 @@ class Conversation extends Model
     }
 
     /**
-     * غير المقروء للأدمن = رسائل المريض (sender = صاحب المحادثة) التي id > آخر ما قرأه الأدمن.
+     * غير المقروء للأدمن = رسائل المريض التي id > آخر ما قرأه الأدمن.
      */
     public function unreadForAdmin(): int
     {
-        $patientId = $this->patient_id ?: $this->user_id;
         return $this->messages()
-            ->where('sender_id', $patientId)
+            ->where('sender_type', \App\Models\Chat\Message::SENDER_PATIENT)
             ->when($this->admin_last_read_message_id, fn ($q) => $q->where('id', '>', $this->admin_last_read_message_id))
             ->count();
     }
 
     /**
-     * غير المقروء للمريض = رسائل الأدمن (sender != صاحب المحادثة) التي id > آخر ما قرأه المريض.
+     * غير المقروء للمريض = رسائل الأدمن التي id > آخر ما قرأه المريض.
      */
     public function unreadForPatient(): int
     {
-        $patientId = $this->patient_id ?: $this->user_id;
         return $this->messages()
-            ->where('sender_id', '!=', $patientId)
+            ->where('sender_type', \App\Models\Chat\Message::SENDER_ADMIN)
             ->when($this->patient_last_read_message_id, fn ($q) => $q->where('id', '>', $this->patient_last_read_message_id))
             ->count();
     }

@@ -28,8 +28,8 @@ class AdminChatController extends Controller
 
         $query = Conversation::with([
             'patient:id,name,phone,district_id,area_id',
-            'patient.district:id,name_ar',
-            'patient.area:id,name_ar',
+            'patient.district:id,name',
+            'patient.area:id,name',
             'assignedTo:id,name',
             'closedBy:id,name',
         ])
@@ -60,7 +60,7 @@ class AdminChatController extends Controller
 
         $conversations->getCollection()->loadCount([
             'messages as unread_count' => fn ($q) => $q
-                ->where('sender_id', '!=', $adminId)
+                ->where('sender_type', \App\Models\Chat\Message::SENDER_PATIENT)
                 ->whereRaw('messages.id > COALESCE(conversations.admin_last_read_message_id, 0)'),
         ]);
 
@@ -83,8 +83,8 @@ class AdminChatController extends Controller
     {
         $conversation->load([
             'patient:id,name,phone,district_id,area_id',
-            'patient.district:id,name_ar',
-            'patient.area:id,name_ar',
+            'patient.district:id,name',
+            'patient.area:id,name',
             'assignedTo:id,name',
             'closedBy:id,name',
         ]);
@@ -288,8 +288,8 @@ class AdminChatController extends Controller
     public function patientProfile(Request $request, $patientId)
     {
         $patient = Patient::with([
-            'district:id,name_ar',
-            'area:id,name_ar',
+            'district:id,name',
+            'area:id,name',
             'chronicDiseases',
             'medications',
             'allergies',
