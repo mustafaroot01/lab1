@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class CreateOrderDTO
 {
     public function __construct(
-        public readonly User $user,
+        public readonly User|\App\Models\Patient $user,
         public readonly ?int $branchId,
         public readonly ?int $districtId,
         public readonly ?int $areaId,
