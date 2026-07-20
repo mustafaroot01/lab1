@@ -46,7 +46,7 @@ class MessageCreated implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         $this->message->loadMissing(['senderAdmin:id,name,role', 'senderPatient:id,name', 'conversation']);
-        $this->message->conversation->loadMissing(['patient:id,name,phone,district_id,area_id', 'patient.district:id,name', 'patient.area:id,name', 'assignedTo:id,name']);
+        $this->message->conversation->loadMissing(['patient:id,name,phone,district_id', 'patient.district:id,name', 'assignedTo:id,name']);
 
         return [
             'message'      => (new MessageResource($this->message))->resolve(),

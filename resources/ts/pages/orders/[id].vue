@@ -239,14 +239,7 @@ const openWhatsApp = (phone: string) => {
   if (clean) window.open(`https://wa.me/${clean}`, '_blank')
 }
 
-const openGoogleMaps = () => {
-  if (!order.value) return
-  if (order.value.address_text) {
-    window.open(`https://maps.google.com/?q=${encodeURIComponent(order.value.address_text)}`, '_blank')
-  } else {
-    toast('لا يوجد عنوان أو إحداثيات متاحة للفتح على الخريطة', 'warning')
-  }
-}
+
 
 const statusColor = (s: string) => ({
   pending:              'warning',
@@ -680,9 +673,6 @@ onMounted(() => {
               <div class="d-flex flex-column gap-y-3">
                 <div class="d-flex justify-space-between align-center">
                   <h6 class="text-h6 font-weight-bold mb-0">العنوان الجغرافي والنطاق</h6>
-                  <VBtn color="primary" variant="text" size="small" prepend-icon="tabler-map-2" class="px-0" @click="openGoogleMaps">
-                    الخريطة
-                  </VBtn>
                 </div>
 
                 <div class="d-flex justify-space-between text-body-2">

@@ -17,7 +17,6 @@ class PreviewCartRequest extends FormRequest
             'subtotal'    => 'required|numeric|min:0',
             'branch_id'   => 'nullable|exists:branches,id',
             'district_id' => 'nullable|exists:districts,id',
-            'area_id'     => 'nullable|exists:areas,id',
             'coupon_code' => 'nullable|string',
         ];
     }
@@ -28,7 +27,6 @@ class PreviewCartRequest extends FormRequest
             'subtotal.required'  => 'إجمالي السلة مطلوب للمعاينة',
             'branch_id.exists'   => 'الفرع المختار غير متوفر',
             'district_id.exists' => 'القضاء المختار غير متوفر',
-            'area_id.exists'     => 'المنطقة المختارة غير متوفرة',
         ];
     }
 }

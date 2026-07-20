@@ -43,7 +43,7 @@ class ConversationStatusChanged implements ShouldBroadcastNow
      */
     public function broadcastWith(): array
     {
-        $this->conversation->loadMissing(['patient:id,name,phone,district_id,area_id', 'patient.district:id,name', 'patient.area:id,name', 'assignedTo:id,name']);
+        $this->conversation->loadMissing(['patient:id,name,phone,district_id', 'patient.district:id,name', 'assignedTo:id,name']);
 
         return [
             'conversation' => (new ConversationResource($this->conversation))->resolve(),

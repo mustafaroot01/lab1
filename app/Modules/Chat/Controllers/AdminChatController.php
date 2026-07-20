@@ -27,9 +27,8 @@ class AdminChatController extends Controller
         $adminId = $request->user()->id;
 
         $query = Conversation::with([
-            'patient:id,name,phone,district_id,area_id',
+            'patient:id,name,phone,district_id',
             'patient.district:id,name',
-            'patient.area:id,name',
             'assignedTo:id,name',
             'closedBy:id,name',
         ])
@@ -82,9 +81,8 @@ class AdminChatController extends Controller
     public function show(Request $request, Conversation $conversation)
     {
         $conversation->load([
-            'patient:id,name,phone,district_id,area_id',
+            'patient:id,name,phone,district_id',
             'patient.district:id,name',
-            'patient.area:id,name',
             'assignedTo:id,name',
             'closedBy:id,name',
         ]);
