@@ -1,14 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 
-interface Area {
-  id: number
-  district_id: number
-  name: string
-  sort_order: number
-  is_active: boolean
-}
-
 interface BranchOption {
   id: number
   name_ar: string
@@ -21,18 +13,13 @@ interface District {
   name: string
   governorate: string
   branch_id?: number | null
-  service_fee?: number | null
-  free_threshold?: number | null
   branch?: {
     id: number
     name_ar: string
     phone: string
-    service_fee?: number
-    free_threshold?: number
   } | null
   sort_order: number
   is_active: boolean
-  areas: Area[]
 }
 
 const districts = ref<District[]>([])
@@ -41,11 +28,8 @@ const loading = ref(false)
 const summary = ref({
   activeDistricts: 0,
   inactiveDistricts: 0,
-  activeAreas: 0,
-  inactiveAreas: 0,
 })
 const totalDistricts = ref(0)
-const totalAreas = ref(0)
 
 const selectedDistrictTab = ref<number | 'all'>('all')
 
@@ -72,29 +56,17 @@ const districtForm = ref({
   name: '',
   governorate: 'ديالى',
   branch_id: null as number | null,
-  service_fee: null as number | null,
-  free_threshold: null as number | null,
   sort_order: 1,
   is_active: true,
 })
 const districtErrors = ref<Record<string, string[]>>({})
 
 // Dialog المنطقة
-const areaDialog = ref(false)
-const isEditingArea = ref(false)
-const editingAreaId = ref<number | null>(null)
-const selectedDistrictId = ref<number | null>(null)
-const areaSaveLoading = ref(false)
-const areaForm = ref({
-  name: '',
-  sort_order: 1,
-  is_active: true,
-})
-const areaErrors = ref<Record<string, string[]>>({})
+
 
 // Dialog الحذف
 const deleteDialog = ref(false)
-const deleteType = ref<'district' | 'area'>('district')
+const deleteType = ref<'district'>('district')
 const targetItem = ref<any>(null)
 const deleteLoading = ref(false)
 
@@ -107,7 +79,6 @@ const fetchDistricts = async () => {
       districts.value = res.districts
       branchesList.value = res.branches || []
       totalDistricts.value = res.totalDistricts
-      totalAreas.value = res.totalAreas
       summary.value = res.summary
     }
   } catch {
@@ -133,8 +104,6 @@ const openAddDistrict = () => {
     name: '',
     governorate: 'ديالى',
     branch_id: null,
-    service_fee: null,
-    free_threshold: null,
     sort_order: districts.value.length + 1,
     is_active: true,
   }
@@ -150,8 +119,6 @@ const openEditDistrict = (d: District) => {
     name: d.name,
     governorate: d.governorate || 'ديالى',
     branch_id: d.branch_id || null,
-    service_fee: d.service_fee !== undefined && d.service_fee !== null ? Number(d.service_fee) : null,
-    free_threshold: d.free_threshold !== undefined && d.free_threshold !== null ? Number(d.free_threshold) : null,
     sort_order: d.sort_order,
     is_active: d.is_active,
   }
@@ -200,81 +167,10 @@ const toggleDistrictActive = async (d: District) => {
   }
 }
 
-// فتح إضافة منطقة لقضاء
-const openAddArea = (d: District) => {
-  isEditingArea.value = false
-  editingAreaId.value = null
-  selectedDistrictId.value = d.id
-  areaForm.value = {
-    name: '',
-    sort_order: (d.areas?.length || 0) + 1,
-    is_active: true,
-  }
-  areaErrors.value = {}
-  areaDialog.value = true
-}
 
-// فتح تعديل منطقة
-const openEditArea = (area: Area) => {
-  isEditingArea.value = true
-  editingAreaId.value = area.id
-  selectedDistrictId.value = area.district_id
-  areaForm.value = {
-    name: area.name,
-    sort_order: area.sort_order,
-    is_active: area.is_active,
-  }
-  areaErrors.value = {}
-  areaDialog.value = true
-}
-
-// حفظ منطقة
-const saveArea = async () => {
-  if (!selectedDistrictId.value) return
-  areaSaveLoading.value = true
-  areaErrors.value = {}
-  errorMessage.value = ''
-
-  try {
-    const url = isEditingArea.value ? `/areas/${editingAreaId.value}` : '/areas'
-    const method = isEditingArea.value ? 'PUT' : 'POST'
-
-    const res = await $api(url, {
-      method,
-      body: {
-        district_id: selectedDistrictId.value,
-        ...areaForm.value,
-      },
-    })
-
-    if (res.status) {
-      areaDialog.value = false
-      showToast(isEditingArea.value ? 'تم تحديث المنطقة بنجاح' : 'تم إضافة المنطقة بنجاح', 'success')
-      fetchDistricts()
-    } else {
-      showToast(res.message || 'حدث خطأ أثناء حفظ المنطقة', 'error')
-    }
-  } catch (e: any) {
-    if (e?.errors) areaErrors.value = e.errors
-    else showToast(e?.message || 'تعذر حفظ المنطقة', 'error')
-  } finally {
-    areaSaveLoading.value = false
-  }
-}
-
-// تفعيل/إخفاء منطقة
-const toggleAreaActive = async (area: Area) => {
-  try {
-    const res = await $api(`/areas/${area.id}/toggle-active`, { method: 'PATCH' })
-    showToast(res.message || 'تم تغيير حالة ظهور المنطقة بنجاح', 'success')
-    fetchDistricts()
-  } catch {
-    showToast('تعذر تغيير حالة المنطقة', 'error')
-  }
-}
 
 // تأكيد الحذف
-const confirmDelete = (type: 'district' | 'area', item: any) => {
+const confirmDelete = (type: 'district', item: any) => {
   deleteType.value = type
   targetItem.value = item
   deleteDialog.value = true
@@ -285,13 +181,11 @@ const executeDelete = async () => {
   if (!targetItem.value) return
   deleteLoading.value = true
   try {
-    const endpoint = deleteType.value === 'district'
-      ? `/districts/${targetItem.value.id}`
-      : `/areas/${targetItem.value.id}`
+    const endpoint = `/districts/${targetItem.value.id}`
 
     await $api(endpoint, { method: 'DELETE' })
     deleteDialog.value = false
-    showToast(deleteType.value === 'district' ? 'تم حذف القضاء بنجاح' : 'تم حذف المنطقة بنجاح', 'success')
+    showToast('تم حذف القضاء بنجاح', 'success')
     fetchDistricts()
   } catch {
     showToast('تعذر تنفيذ عملية الحذف', 'error')
@@ -335,7 +229,7 @@ onMounted(fetchDistricts)
 
     <!-- Summary Cards -->
     <VRow class="mb-6">
-      <VCol cols="12" sm="3">
+      <VCol cols="12" sm="6">
         <VCard>
           <VCardText class="d-flex align-center gap-4">
             <VAvatar color="primary" variant="tonal" size="52" rounded>
@@ -344,48 +238,6 @@ onMounted(fetchDistricts)
             <div>
               <div class="text-h4 font-weight-bold">{{ totalDistricts }}</div>
               <div class="text-body-2 text-medium-emphasis">إجمالي الأقضية</div>
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-
-      <VCol cols="12" sm="3">
-        <VCard>
-          <VCardText class="d-flex align-center gap-4">
-            <VAvatar color="info" variant="tonal" size="52" rounded>
-              <VIcon icon="tabler-building-community" size="28" />
-            </VAvatar>
-            <div>
-              <div class="text-h4 font-weight-bold">{{ totalAreas }}</div>
-              <div class="text-body-2 text-medium-emphasis">إجمالي المناطق والأحياء</div>
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-
-      <VCol cols="12" sm="3">
-        <VCard>
-          <VCardText class="d-flex align-center gap-4">
-            <VAvatar color="success" variant="tonal" size="52" rounded>
-              <VIcon icon="tabler-circle-check" size="28" />
-            </VAvatar>
-            <div>
-              <div class="text-h4 font-weight-bold text-success">{{ summary.activeAreas }}</div>
-              <div class="text-body-2 text-medium-emphasis">مناطق مفعلة بالتطبيق</div>
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-
-      <VCol cols="12" sm="3">
-        <VCard>
-          <VCardText class="d-flex align-center gap-4">
-            <VAvatar color="error" variant="tonal" size="52" rounded>
-              <VIcon icon="tabler-eye-off" size="28" />
-            </VAvatar>
-            <div>
-              <div class="text-h4 font-weight-bold text-error">{{ summary.inactiveAreas }}</div>
-              <div class="text-body-2 text-medium-emphasis">مناطق مخفية</div>
             </div>
           </VCardText>
         </VCard>
@@ -419,7 +271,7 @@ onMounted(fetchDistricts)
         rounded="lg"
         @click="selectedDistrictTab = d.id"
       >
-        قضاء {{ d.name }} ({{ d.areas?.length || 0 }})
+        قضاء {{ d.name }}
       </VBtn>
     </div>
 
@@ -438,194 +290,99 @@ onMounted(fetchDistricts)
       </VBtn>
     </div>
 
-    <!-- Districts Cards Layout -->
-    <div v-else class="d-flex flex-column gap-6">
-      <VCard v-for="district in displayedDistricts" :key="district.id" elevation="2">
-        <!-- District Top Header Bar -->
-        <div class="pa-5 d-flex flex-wrap justify-space-between align-center gap-4 border-b" style="background: rgba(var(--v-theme-primary), 0.04);">
-          <div class="d-flex align-center gap-4">
-            <VAvatar :color="district.is_active ? 'primary' : 'secondary'" variant="tonal" size="48" rounded>
-              <VIcon icon="tabler-map-pin" size="26" />
-            </VAvatar>
-
-            <div>
-              <div class="d-flex align-center gap-2 mb-1">
-                <span class="text-h5 font-weight-bold">قضاء {{ district.name }}</span>
-                <VChip
-                  :color="district.is_active ? 'success' : 'error'"
-                  size="small"
-                  variant="tonal"
-                  :prepend-icon="district.is_active ? 'tabler-check' : 'tabler-eye-off'"
-                >
-                  {{ district.is_active ? 'ظاهر في التطبيق' : 'مخفي من التطبيق' }}
-                </VChip>
-
-                <VChip
-                  v-if="district.branch"
-                  color="info"
-                  size="small"
-                  variant="tonal"
-                  prepend-icon="tabler-building-store"
-                >
-                  الفرع المخبري المسؤول: {{ district.branch.name_ar }}
-                </VChip>
-
-                <VChip
-                  color="warning"
-                  size="small"
-                  variant="tonal"
-                  prepend-icon="tabler-coin"
-                >
-                  أجور الزيارة: {{ district.service_fee !== null && district.service_fee !== undefined ? `${district.service_fee.toLocaleString()} د.ع` : (district.branch?.service_fee ? `${district.branch.service_fee.toLocaleString()} د.ع (حسب الفرع)` : '0 د.ع') }}
-                </VChip>
-
-                <VChip
-                  v-if="district.free_threshold || district.branch?.free_threshold"
-                  color="success"
-                  size="small"
-                  variant="tonal"
-                  prepend-icon="tabler-gift"
-                >
-                  الحد المجاني: {{ district.free_threshold !== null && district.free_threshold !== undefined ? `${district.free_threshold.toLocaleString()} د.ع` : `${district.branch?.free_threshold?.toLocaleString()} د.ع (حسب الفرع)` }}
-                </VChip>
+    <!-- Districts Table Layout -->
+    <VCard v-else>
+      <VTable class="text-no-wrap">
+        <thead>
+          <tr>
+            <th class="text-uppercase text-caption font-weight-bold">#</th>
+            <th class="text-uppercase text-caption font-weight-bold">اسم القضاء</th>
+            <th class="text-uppercase text-caption font-weight-bold">المحافظة</th>
+            <th class="text-uppercase text-caption font-weight-bold">الفرع المسؤول</th>
+            <th class="text-uppercase text-caption font-weight-bold text-center">الظهور في التطبيق</th>
+            <th class="text-uppercase text-caption font-weight-bold text-center">الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(district, idx) in displayedDistricts" :key="district.id">
+            <td class="text-body-2 font-weight-bold">{{ idx + 1 }}</td>
+            <td>
+              <div class="d-flex align-center gap-3 py-2">
+                <VAvatar :color="district.is_active ? 'primary' : 'secondary'" variant="tonal" size="38" rounded>
+                  <VIcon icon="tabler-map-pin" size="22" />
+                </VAvatar>
+                <span class="text-body-1 font-weight-bold">{{ district.name }}</span>
               </div>
-              <div class="text-body-2 text-medium-emphasis">
-                محافظة {{ district.governorate }} — يحتوي على {{ district.areas.length }} منطقة مسجلة
+            </td>
+            <td class="text-body-2">{{ district.governorate }}</td>
+            <td>
+              <VChip
+                v-if="district.branch"
+                color="info"
+                size="small"
+                variant="tonal"
+                prepend-icon="tabler-building-store"
+              >
+                {{ district.branch.name_ar }}
+              </VChip>
+              <span v-else class="text-medium-emphasis text-caption">غير محدد</span>
+            </td>
+            <td class="text-center">
+              <VChip
+                :color="district.is_active ? 'success' : 'error'"
+                size="small"
+                variant="tonal"
+                :prepend-icon="district.is_active ? 'tabler-check' : 'tabler-eye-off'"
+              >
+                {{ district.is_active ? 'ظاهر' : 'مخفي' }}
+              </VChip>
+            </td>
+            <td class="text-center">
+              <div class="d-flex align-center justify-center gap-2">
+                <VTooltip :text="district.is_active ? 'إخفاء' : 'إظهار'" location="top">
+                  <template #activator="{ props }">
+                    <VBtn
+                      v-bind="props"
+                      :icon="district.is_active ? 'tabler-eye-off' : 'tabler-eye'"
+                      :color="district.is_active ? 'warning' : 'success'"
+                      variant="tonal"
+                      size="small"
+                      @click="toggleDistrictActive(district)"
+                    />
+                  </template>
+                </VTooltip>
+
+                <VTooltip text="تعديل القضاء" location="top">
+                  <template #activator="{ props }">
+                    <VBtn
+                      v-bind="props"
+                      icon="tabler-edit"
+                      color="primary"
+                      variant="tonal"
+                      size="small"
+                      @click="openEditDistrict(district)"
+                    />
+                  </template>
+                </VTooltip>
+
+                <VTooltip text="حذف القضاء" location="top">
+                  <template #activator="{ props }">
+                    <VBtn
+                      v-bind="props"
+                      icon="tabler-trash"
+                      color="error"
+                      variant="tonal"
+                      size="small"
+                      @click="confirmDelete('district', district)"
+                    />
+                  </template>
+                </VTooltip>
               </div>
-            </div>
-          </div>
-
-          <!-- أزرار التحكم بالقضاء -->
-          <div class="d-flex align-center gap-2">
-            <VBtn
-              color="primary"
-              variant="elevated"
-              size="small"
-              prepend-icon="tabler-plus"
-              @click="openAddArea(district)"
-            >
-              إضافة منطقة للحي
-            </VBtn>
-
-            <VTooltip :text="district.is_active ? 'إخفاء القضاء في التطبيق' : 'إظهار القضاء في التطبيق'" location="top">
-              <template #activator="{ props }">
-                <VBtn
-                  v-bind="props"
-                  :icon="district.is_active ? 'tabler-eye-off' : 'tabler-eye'"
-                  :color="district.is_active ? 'warning' : 'success'"
-                  variant="tonal"
-                  size="small"
-                  @click="toggleDistrictActive(district)"
-                />
-              </template>
-            </VTooltip>
-
-            <VTooltip text="تعديل اسم القضاء" location="top">
-              <template #activator="{ props }">
-                <VBtn
-                  v-bind="props"
-                  icon="tabler-edit"
-                  color="primary"
-                  variant="tonal"
-                  size="small"
-                  @click="openEditDistrict(district)"
-                />
-              </template>
-            </VTooltip>
-
-            <VTooltip text="حذف القضاء بالكامل" location="top">
-              <template #activator="{ props }">
-                <VBtn
-                  v-bind="props"
-                  icon="tabler-trash"
-                  color="error"
-                  variant="tonal"
-                  size="small"
-                  @click="confirmDelete('district', district)"
-                />
-              </template>
-            </VTooltip>
-          </div>
-        </div>
-
-        <!-- Areas Table -->
-        <VTable class="text-no-wrap">
-          <thead>
-            <tr>
-              <th style="width: 70px;">#</th>
-              <th>اسم المنطقة / الحي</th>
-              <th class="text-center" style="width: 160px;">تفعيل الظهور</th>
-              <th class="text-center" style="width: 140px;">الحالة</th>
-              <th class="text-center" style="width: 140px;">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="district.areas.length === 0">
-              <td colspan="5" class="text-center py-8 text-medium-emphasis">
-                لا توجد مناطق مضافة داخل قضاء {{ district.name }}. اضغط على زر (إضافة منطقة للحي) أعلاه.
-              </td>
-            </tr>
-
-            <tr v-for="(area, idx) in district.areas" :key="area.id">
-              <td class="text-body-2 font-weight-bold">{{ idx + 1 }}</td>
-              <td>
-                <div class="d-flex align-center gap-2 py-2">
-                  <VIcon icon="tabler-point" color="primary" size="20" />
-                  <span class="font-weight-semibold text-body-1">{{ area.name }}</span>
-                </div>
-              </td>
-              <td class="text-center">
-                <VSwitch
-                  :model-value="area.is_active"
-                  color="success"
-                  hide-details
-                  class="d-inline-flex"
-                  @change="toggleAreaActive(area)"
-                />
-              </td>
-              <td class="text-center">
-                <VChip
-                  :color="area.is_active ? 'success' : 'error'"
-                  size="small"
-                  variant="tonal"
-                >
-                  {{ area.is_active ? 'نشط ومتاح للطلب' : 'مخفي' }}
-                </VChip>
-              </td>
-              <td class="text-center">
-                <div class="d-flex align-center justify-center gap-1">
-                  <VTooltip text="تعديل اسم المنطقة" location="top">
-                    <template #activator="{ props }">
-                      <VBtn
-                        v-bind="props"
-                        icon="tabler-edit"
-                        color="primary"
-                        variant="text"
-                        size="small"
-                        @click="openEditArea(area)"
-                      />
-                    </template>
-                  </VTooltip>
-
-                  <VTooltip text="حذف المنطقة" location="top">
-                    <template #activator="{ props }">
-                      <VBtn
-                        v-bind="props"
-                        icon="tabler-trash"
-                        color="error"
-                        variant="text"
-                        size="small"
-                        @click="confirmDelete('area', area)"
-                      />
-                    </template>
-                  </VTooltip>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </VTable>
-      </VCard>
-    </div>
+            </td>
+          </tr>
+        </tbody>
+      </VTable>
+    </VCard>
 
     <!-- Dialog إضافة / تعديل قضاء -->
     <VDialog v-model="districtDialog" max-width="500" persistent>
@@ -661,28 +418,6 @@ onMounted(fetchDistricts)
               />
             </VCol>
 
-            <VCol cols="12" md="6">
-              <AppTextField
-                v-model.number="districtForm.service_fee"
-                label="أجور الزيارة المنزلية لهذا القضاء (د.ع)"
-                placeholder="اتركه فارغاً لاعتماد أجور الفرع"
-                type="number"
-                clearable
-                :error-messages="districtErrors.service_fee"
-              />
-            </VCol>
-
-            <VCol cols="12" md="6">
-              <AppTextField
-                v-model.number="districtForm.free_threshold"
-                label="الحد الأدنى للزيارة المجانية في القضاء (د.ع)"
-                placeholder="اتركه فارغاً لاعتماد حد الفرع"
-                type="number"
-                clearable
-                :error-messages="districtErrors.free_threshold"
-              />
-            </VCol>
-
             <VCol cols="12">
               <div class="d-flex align-center justify-space-between pa-3 rounded border">
                 <div>
@@ -704,40 +439,7 @@ onMounted(fetchDistricts)
       </VCard>
     </VDialog>
 
-    <!-- Dialog إضافة / تعديل منطقة -->
-    <VDialog v-model="areaDialog" max-width="500" persistent>
-      <VCard :title="isEditingArea ? 'تعديل المنطقة / الحي' : 'إضافة منطقة جديدة'">
-        <VCardText class="pt-2">
-          <VRow>
-            <VCol cols="12">
-              <AppTextField
-                v-model="areaForm.name"
-                label="اسم المنطقة أو الحي *"
-                placeholder="مثال: مركز بعقوبة، حي المعلمين، التحرير"
-                :error-messages="areaErrors.name"
-              />
-            </VCol>
 
-            <VCol cols="12">
-              <div class="d-flex align-center justify-space-between pa-3 rounded border">
-                <div>
-                  <div class="font-weight-medium text-body-1">إظهار المنطقة في التطبيق</div>
-                  <div class="text-caption text-medium-emphasis">تتيح للعملاء اختيار هذه المنطقة لسحب العينة</div>
-                </div>
-                <VSwitch v-model="areaForm.is_active" color="success" hide-details />
-              </div>
-            </VCol>
-          </VRow>
-        </VCardText>
-
-        <VCardActions class="pa-4 justify-end gap-2">
-          <VBtn variant="tonal" color="secondary" @click="areaDialog = false">إلغاء</VBtn>
-          <VBtn color="primary" :loading="areaSaveLoading" @click="saveArea">
-            حفظ
-          </VBtn>
-        </VCardActions>
-      </VCard>
-    </VDialog>
 
     <!-- Delete Dialog -->
     <VDialog v-model="deleteDialog" max-width="440">
@@ -748,7 +450,7 @@ onMounted(fetchDistricts)
           </VAvatar>
           <h5 class="text-h5 font-weight-bold mb-2">تأكيد الحذف</h5>
           <p class="text-body-1 text-medium-emphasis mb-0">
-            {{ deleteType === 'district' ? 'هل أنت متأكد من حذف القضاء وجميع المناطق التابعة له نهائياً؟' : 'هل أنت متأكد من حذف هذه المنطقة؟' }}
+            هل أنت متأكد من حذف القضاء نهائياً؟
           </p>
         </VCardText>
         <VCardActions class="justify-center gap-4 pb-6">

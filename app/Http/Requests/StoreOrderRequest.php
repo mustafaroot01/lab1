@@ -24,10 +24,8 @@ class StoreOrderRequest extends FormRequest
             'visit_time'   => ['required', 'regex:/^\d{2}:\d{2}$/'],
             'visit_period' => 'required|in:morning,noon,evening',
 
-            // الموقع (أحد الخيارين إلزامي)
-            'lat'          => 'required_without:address_text|nullable|numeric',
-            'lng'          => 'required_without:address_text|nullable|numeric',
-            'address_text' => 'required_without:lat|nullable|string|max:500',
+            // الموقع (إلزامي)
+            'address_text' => 'required|string|max:500',
 
             // اختيارية
             'coupon_code'    => 'nullable|string|max:100',
@@ -36,7 +34,6 @@ class StoreOrderRequest extends FormRequest
             'notes'          => 'nullable|string|max:1000',
             'branch_id'      => 'nullable|exists:branches,id',
             'district_id'    => 'nullable|exists:districts,id',
-            'area_id'        => 'nullable|exists:areas,id',
         ];
     }
 
@@ -50,8 +47,7 @@ class StoreOrderRequest extends FormRequest
             'visit_date.after_or_equal' => 'لا يمكن اختيار تاريخ في الماضي',
             'visit_time.required'       => 'يرجى اختيار وقت الزيارة',
             'visit_period.required'     => 'يرجى تحديد الفترة (صباح/ظهر/مساء)',
-            'lat.required_without'      => 'يرجى تحديد الموقع أو كتابة العنوان',
-            'address_text.required_without' => 'يرجى تحديد الموقع أو كتابة العنوان',
+            'address_text.required'     => 'يرجى كتابة العنوان التفصيلي',
         ];
     }
 

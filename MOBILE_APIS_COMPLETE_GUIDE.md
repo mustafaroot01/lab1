@@ -102,35 +102,17 @@
           "phone": "07710030147",
           "service_fee": 5000,
           "free_threshold": 0
-        },
-        "areas": [
-          { "id": 1, "district_id": 1, "name": "مركز بعقوبة" },
-          { "id": 2, "district_id": 1, "name": "حي المعلمين" },
-          { "id": 3, "district_id": 1, "name": "التحرير" },
-          { "id": 4, "district_id": 1, "name": "المفرق" },
-          { "id": 5, "district_id": 1, "name": "بهرز" }
-        ]
+        }
       },
       {
         "id": 2,
         "name": "كنعان",
-        "governorate": "ديالى",
-        "areas": [
-          { "id": 6, "district_id": 2, "name": "مركز كنعان" },
-          { "id": 7, "district_id": 2, "name": "بزايز كنعان" },
-          { "id": 8, "district_id": 2, "name": "المرادية" }
-        ]
+        "governorate": "ديالى"
       },
       {
         "id": 3,
         "name": "الخالص",
-        "governorate": "ديالى",
-        "areas": [
-          { "id": 9, "district_id": 3, "name": "مركز الخالص" },
-          { "id": 10, "district_id": 3, "name": "المنصورية" },
-          { "id": 11, "district_id": 3, "name": "الأسود" },
-          { "id": 12, "district_id": 3, "name": "سد العظيم" }
-        ]
+        "governorate": "ديالى"
       }
     ],
     "terms": {
@@ -146,7 +128,7 @@
 
 ---
 
-### 1.4 إكمال الملف الشخصي للمريض الجديد (Complete Profile)
+### 1.5 إكمال الملف الشخصي للمريض الجديد (Complete Profile)
 * **الرابط:** `POST /api/v1/patient/auth/complete-profile`
 * **الحماية:** يتطلب توكن (`Bearer Token`)
 * **جسم الطلب (Request Body):**
@@ -156,7 +138,6 @@
     "gender": "male",
     "birth_date": "1990-05-15",
     "district_id": 1,
-    "area_id": 5,
     "address_text": "بغداد - الكرادة - شارع 62 - منزل 15"
   }
   ```
@@ -165,33 +146,72 @@
   {
     "status": true,
     "message": "تم إكمال الملف الشخصي بنجاح",
-    "user": { ... }
+    "user": {
+      "id": 1,
+      "name": "أحمد محمد علي",
+      "phone": "07700000000",
+      "is_profile_completed": true
+    }
   }
   ```
 
 ---
 
-### 1.5 تعديل الملف الشخصي (Update Profile)
+### 1.6 تعديل الملف الشخصي (Update Profile)
 * **الرابط:** `PUT /api/v1/patient/auth/update-profile`
 * **الحماية:** يتطلب توكن (`Bearer Token`)
-* **جسم الطلب (Request Body):** نفس حقول إكمال الملف الشخصي (`name`, `gender`, `birth_date`, `district_id`, `area_id`, `address_text`).
+* **جسم الطلب (Request Body):** نفس حقول إكمال الملف الشخصي (`name`, `gender`, `birth_date`, `district_id`, `address_text`).
+* **الرد الناجح (200 OK):** نفس استجابة إكمال الملف الشخصي أعلاه.
 
 ---
 
-### 1.6 جلب بيانات المريض الحالي (Get Profile / Me)
+### 1.7 جلب بيانات المريض الحالي (Get Profile / Me)
 * **الرابط:** `GET /api/v1/patient/auth/me`
 * **الحماية:** يتطلب توكن (`Bearer Token`)
-* **الرد الناجح (200 OK):** يرجع بيانات المريض كاملة وتاريخ التسجيل والعنوان الافتراضي.
+* **الرد الناجح (200 OK):**
+  ```json
+  {
+    "status": true,
+    "user": {
+      "id": 1,
+      "name": "أحمد محمد علي",
+      "phone": "07700000000",
+      "gender": "male",
+      "birth_date": "1990-05-15",
+      "is_profile_completed": true,
+      "district_id": 1,
+      "address_text": "بغداد - الكرادة",
+      "created_at": "2026-07-15T10:00:00.000000Z"
+    }
+  }
+  ```
 
 ---
 
-### 1.7 تجديد التوكن وتسجيل الخروج وحذف الحساب (Tokens & Deletion)
+### 1.8 تجديد التوكن وتسجيل الخروج وحذف الحساب (Tokens & Deletion)
 * **تجديد التوكن:** `POST /api/v1/patient/auth/refresh-token` (`Bearer Token`)
+  ```json
+  {
+    "status": true,
+    "message": "تم تجديد التوكن بنجاح",
+    "token": "2|newtoken1234..."
+  }
+  ```
 * **تسجيل الخروج وإبطال التوكن الحالي:** `POST /api/v1/patient/auth/logout` (`Bearer Token`)
+  ```json
+  {
+    "status": true,
+    "message": "تم تسجيل الخروج بنجاح"
+  }
+  ```
 * **طلب حذف الحساب (إجباري لقبول التطبيق في Apple App Store):**
-  `DELETE /api/v1/patient/auth/delete-account` (`Bearer Token`)  
-  يقوم بإرسال إشعار لإدارة المختبر لحذف الحساب مع تعطيل الجلسة وإرجاع رسالة:
-  *"تم إرسال طلب حذف الحساب بنجاح، سيتم مراجعة طلبك من قبل الإدارة."*
+  `DELETE /api/v1/patient/auth/delete-account` (`Bearer Token`)
+  ```json
+  {
+    "status": true,
+    "message": "تم إرسال طلب حذف الحساب بنجاح، سيتم مراجعة طلبك من قبل الإدارة."
+  }
+  ```
 
 ---
 
@@ -331,8 +351,6 @@
     "visit_date": "2026-07-20",
     "visit_time": "10:00 AM",
     "address_details": "بغداد - الكرادة - شارع 62 - منزل 15",
-    "lat": 33.3152,
-    "lng": 44.3661,
     "notes": "يرجى الاتصال قبل الوصول بـ 15 دقيقة",
     "coupon_code": null,
     "referral_image": "orders/referrals/img_xyz.png" // اختيارية إذا تم رفع روشتة
@@ -602,7 +620,7 @@
 ### 2.2 جلب تفاصيل الزيارة وإحداثيات المريض للوصول عبر الـ GPS (Order Details)
 * **الرابط:** `GET /api/v1/technician/orders/{id}`
 * **الحماية:** يتطلب توكن الفني (`Bearer Token`)
-* **الرد الناجح:** يرجع كائن `order` كامل يحتوي على `lat` و `lng` للعنوان ليقوم الفني بفتحه في `Google Maps` أو `Apple Maps`، بالإضافة لقائمة التحاليل التي يجب سحب عيناتها وأي ملاحظات كتبها المريض.
+* **الرد الناجح:** يرجع كائن `order` كامل يحتوي على عنوان المريض ليقوم الفني بالوصول إليه، بالإضافة لقائمة التحاليل التي يجب سحب عيناتها وأي ملاحظات كتبها المريض.
 
 ---
 
@@ -614,9 +632,7 @@
   ```json
   {
     "status": "on_the_way", // القيم المسموحة فقط: on_the_way أو sample_collected
-    "notes": "الفني تحرك نحو منزل المراجع، المتوقع الوصول خلال 15 دقيقة", // اختياري
-    "lat": 33.3152, // إحداثيات الفني الحية عند التحديث (اختيارية)
-    "lng": 44.3661
+    "notes": "الفني تحرك نحو منزل المراجع، المتوقع الوصول خلال 15 دقيقة" // اختياري
   }
   ```
 * **توضيح دقيق للحالات المسموحة للفني (`status`):**

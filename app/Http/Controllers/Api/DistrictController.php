@@ -7,7 +7,6 @@ use App\Http\Requests\StoreDistrictRequest;
 use App\Http\Requests\UpdateDistrictRequest;
 use App\Http\Resources\DistrictResource;
 use App\Models\District;
-use App\Models\Area;
 use Illuminate\Http\Request;
 
 class DistrictController extends Controller
@@ -19,55 +18,28 @@ class DistrictController extends Controller
     {
         if (District::count() === 0) {
             // بعقوبة
-            $baqubah = District::create([
+            District::create([
                 'name'        => 'بعقوبة',
                 'governorate' => 'ديالى',
                 'sort_order'  => 1,
                 'is_active'   => true,
             ]);
-            $baqubahAreas = ['مركز بعقوبة', 'حي المعلمين', 'التحرير', 'المفرق', 'بهرز'];
-            foreach ($baqubahAreas as $idx => $areaName) {
-                Area::create([
-                    'district_id' => $baqubah->id,
-                    'name'        => $areaName,
-                    'sort_order'  => $idx + 1,
-                    'is_active'   => true,
-                ]);
-            }
 
             // كنعان
-            $kanaan = District::create([
+            District::create([
                 'name'        => 'كنعان',
                 'governorate' => 'ديالى',
                 'sort_order'  => 2,
                 'is_active'   => true,
             ]);
-            $kanaanAreas = ['مركز كنعان', 'بزايز كنعان', 'المرادية'];
-            foreach ($kanaanAreas as $idx => $areaName) {
-                Area::create([
-                    'district_id' => $kanaan->id,
-                    'name'        => $areaName,
-                    'sort_order'  => $idx + 1,
-                    'is_active'   => true,
-                ]);
-            }
 
             // الخالص
-            $khalis = District::create([
+            District::create([
                 'name'        => 'الخالص',
                 'governorate' => 'ديالى',
                 'sort_order'  => 3,
                 'is_active'   => true,
             ]);
-            $khalisAreas = ['مركز الخالص', 'المنصورية', 'الأسود', 'سد العظيم'];
-            foreach ($khalisAreas as $idx => $areaName) {
-                Area::create([
-                    'district_id' => $khalis->id,
-                    'name'        => $areaName,
-                    'sort_order'  => $idx + 1,
-                    'is_active'   => true,
-                ]);
-            }
         }
     }
 
@@ -78,7 +50,7 @@ class DistrictController extends Controller
     {
         $this->ensureDefaultDistrictsExist();
 
-        $districts = District::with(['areas', 'branch'])
+        $districts = District::with(['branch'])
             ->orderBy('sort_order', 'asc')
             ->orderBy('id', 'asc')
             ->get();
@@ -87,16 +59,13 @@ class DistrictController extends Controller
 
         return response()->json([
             'status'         => true,
-            'message'        => 'تم جلب قائمة الأقضية والمناطق بنجاح',
+            'message'        => 'تم جلب قائمة الأقضية بنجاح',
             'districts'      => DistrictResource::collection($districts),
             'branches'       => $branches,
             'totalDistricts' => $districts->count(),
-            'totalAreas'     => Area::count(),
             'summary'        => [
                 'activeDistricts'   => District::where('is_active', true)->count(),
                 'inactiveDistricts' => District::where('is_active', false)->count(),
-                'activeAreas'       => Area::where('is_active', true)->count(),
-                'inactiveAreas'     => Area::where('is_active', false)->count(),
             ],
         ]);
     }
@@ -120,7 +89,7 @@ class DistrictController extends Controller
         return response()->json([
             'status'   => true,
             'message'  => 'تم إضافة القضاء بنجاح',
-            'district' => new DistrictResource($district->load(['areas', 'branch'])),
+            'district' => new DistrictResource($district->load(['branch'])),
         ], 201);
     }
 
@@ -131,7 +100,7 @@ class DistrictController extends Controller
     {
         return response()->json([
             'status'   => true,
-            'district' => new DistrictResource($district->load(['areas', 'branch'])),
+            'district' => new DistrictResource($district->load(['branch'])),
         ]);
     }
 
@@ -145,7 +114,7 @@ class DistrictController extends Controller
         return response()->json([
             'status'   => true,
             'message'  => 'تم تحديث القضاء بنجاح',
-            'district' => new DistrictResource($district->load(['areas', 'branch'])),
+            'district' => new DistrictResource($district->load(['branch'])),
         ]);
     }
 
@@ -158,7 +127,7 @@ class DistrictController extends Controller
 
         return response()->json([
             'status'  => true,
-            'message' => 'تم حذف القضاء وجميع مناطقه بنجاح',
+            'message' => 'تم حذف القضاء بنجاح',
         ]);
     }
 
@@ -172,7 +141,7 @@ class DistrictController extends Controller
         return response()->json([
             'status'   => true,
             'message'  => $district->is_active ? 'تم تفعيل القضاء بنجاح' : 'تم إخفاء القضاء بنجاح',
-            'district' => new DistrictResource($district->load(['areas', 'branch'])),
+            'district' => new DistrictResource($district->load(['branch'])),
         ]);
     }
 }

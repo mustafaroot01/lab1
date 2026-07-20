@@ -32,7 +32,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'status' => true,
-            'user'   => new UserResource($user->load(['district.branch', 'area'])),
+            'user'   => new UserResource($user->load(['district.branch'])),
         ]);
     }
 
@@ -49,7 +49,7 @@ class ProfileController extends Controller
             'birth_date'           => $request->input('birth_date'),
             'gender'               => $request->input('gender'),
             'district_id'          => $request->input('district_id'),
-            'area_id'              => $request->input('area_id'),
+            'address'              => $request->input('address'),
             'is_profile_completed' => true,
         ]);
 
@@ -60,7 +60,7 @@ class ProfileController extends Controller
             'status'    => true,
             'message'   => 'تم إكمال الملف الشخصي بنجاح، مرحباً بك في التطبيق',
             'next_step' => 'home',
-            'user'      => new UserResource($user->fresh(['district.branch', 'area'])),
+            'user'      => new UserResource($user->fresh(['district.branch'])),
         ]);
     }
 
@@ -77,24 +77,14 @@ class ProfileController extends Controller
         if ($request->has('birth_date'))  $updateData['birth_date'] = $request->input('birth_date');
         if ($request->has('gender'))      $updateData['gender'] = $request->input('gender');
         if ($request->has('district_id')) $updateData['district_id'] = $request->input('district_id');
-        if ($request->has('area_id'))     $updateData['area_id'] = $request->input('area_id');
-
-        // في حال تغيير القضاء، التحقق من أن المنطقة تابعة له أو تفريغها
-        if (isset($updateData['district_id'])) {
-            $targetAreaId = $updateData['area_id'] ?? $user->area_id;
-            if ($targetAreaId && !Area::where('id', $targetAreaId)->where('district_id', $updateData['district_id'])->exists()) {
-                $updateData['area_id'] = null;
-            }
-        }
+        if ($request->has('address'))     $updateData['address'] = $request->input('address');
 
         if (!empty($updateData)) {
             $user->update($updateData);
         }
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'تم تحديث بيانات الحساب والقضاء والمنطقة بنجاح ✓',
-            'user'    => new UserResource($user->fresh(['district.branch', 'area'])),
+            'message' => 'تم تحديث بيانات الحساب بنجاح ✓',
+            'user'    => new UserResource($user->fresh(['district.branch'])),
         ]);
     }
 

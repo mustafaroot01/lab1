@@ -19,16 +19,12 @@ class UserResource extends JsonResource
             'is_profile_completed' => (bool) $this->is_profile_completed,
             'agreed_to_terms'      => (bool) $this->agreed_to_terms,
             'district_id'          => $this->district_id,
-            'area_id'              => $this->area_id,
+            'address'              => $this->address,
             'district'             => $this->whenLoaded('district', fn() => [
                 'id'          => $this->district->id,
                 'name'        => $this->district->name,
                 'governorate' => $this->district->governorate,
                 'branch_id'   => $this->district->branch_id,
-            ]),
-            'area'                 => $this->whenLoaded('area', fn() => [
-                'id'   => $this->area->id,
-                'name' => $this->area->name,
             ]),
             'assigned_branch'      => $this->whenLoaded('district', fn() => $this->district?->branch ? [
                 'id'             => $this->district->branch->id,

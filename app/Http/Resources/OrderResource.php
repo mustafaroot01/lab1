@@ -32,8 +32,6 @@ class OrderResource extends JsonResource
             },
 
             // الموقع
-            'lat'          => $this->lat,
-            'lng'          => $this->lng,
             'address_text' => $this->address_text,
 
             // معلومات إضافية
@@ -45,31 +43,26 @@ class OrderResource extends JsonResource
             'cancel_reason'  => $this->cancel_reason,
 
             'district_id' => $this->district_id ?? ($this->patient?->district_id ?? null),
-            'area_id'     => $this->area_id ?? ($this->patient?->area_id ?? null),
 
             // العلاقات
             'patient'    => $this->whenLoaded('patient', function () {
                 $district = ($this->relationLoaded('district') && $this->district) ? $this->district : (($this->patient->relationLoaded('district')) ? $this->patient->district : null);
-                $area = ($this->relationLoaded('area') && $this->area) ? $this->area : (($this->patient->relationLoaded('area')) ? $this->patient->area : null);
 
                 return [
                     'id'            => $this->patient->id,
                     'name'          => $this->patient->name,
                     'phone'         => $this->patient->phone,
                     'district_name' => $district ? ($district->name_ar ?? $district->name) : '—',
-                    'area_name'     => $area ? ($area->name_ar ?? $area->name) : '—',
                 ];
             }),
             'user'       => $this->whenLoaded('patient', function () {
                 $district = ($this->relationLoaded('district') && $this->district) ? $this->district : (($this->patient->relationLoaded('district')) ? $this->patient->district : null);
-                $area = ($this->relationLoaded('area') && $this->area) ? $this->area : (($this->patient->relationLoaded('area')) ? $this->patient->area : null);
 
                 return [
                     'id'            => $this->patient->id,
                     'name'          => $this->patient->name,
                     'phone'         => $this->patient->phone,
                     'district_name' => $district ? ($district->name_ar ?? $district->name) : '—',
-                    'area_name'     => $area ? ($area->name_ar ?? $area->name) : '—',
                 ];
             }),
 

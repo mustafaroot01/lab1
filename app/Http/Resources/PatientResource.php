@@ -26,15 +26,10 @@ class PatientResource extends JsonResource
             'is_profile_completed' => (bool) $this->is_profile_completed,
             'is_active'            => !isset($this->is_active) || (bool) $this->is_active,
             'district_id'          => $this->district_id,
-            'area_id'              => $this->area_id,
             'district'             => $this->whenLoaded('district', fn() => [
                 'id'          => $this->district->id,
                 'name'        => $this->district->name,
                 'governorate' => $this->district->governorate,
-            ]),
-            'area'                 => $this->whenLoaded('area', fn() => [
-                'id'   => $this->area->id,
-                'name' => $this->area->name,
             ]),
             'assigned_branch'      => $this->whenLoaded('district', fn() => $this->district?->branch ? [
                 'id'             => $this->district->branch->id,

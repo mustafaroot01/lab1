@@ -26,10 +26,8 @@ class OrderController extends Controller
         $query = \App\Queries\OrderSearch::run($request)
             ->with([
                 'district:id,name',
-                'area:id,name',
-                'patient:id,name,phone,district_id,area_id',
+                'patient:id,name,phone,district_id',
                 'patient.district:id,name',
-                'patient.area:id,name',
                 'branch:id,name_ar,phone',
                 'technician:id,name,phone'
             ])
@@ -80,7 +78,7 @@ class OrderController extends Controller
      */
     public function show(Order $order)
     {
-        $order->load(['district', 'area', 'patient.district', 'patient.area', 'branch', 'technician', 'coupon', 'items', 'statusLogs.changedBy', 'results']);
+        $order->load(['district', 'patient.district', 'branch', 'technician', 'coupon', 'items', 'statusLogs.changedBy', 'results']);
 
         return response()->json([
             'status' => true,
@@ -134,7 +132,7 @@ class OrderController extends Controller
             }
         }
 
-        $order->load(['patient.district', 'patient.area', 'branch', 'technician', 'coupon', 'items', 'statusLogs.changedBy', 'results']);
+        $order->load(['patient.district', 'branch', 'technician', 'coupon', 'items', 'statusLogs.changedBy', 'results']);
 
         return response()->json([
             'status'  => true,
@@ -176,7 +174,7 @@ class OrderController extends Controller
         // Dispatch result ready notification
         event(new OrderStatusChanged($order, NotificationType::RESULT_READY));
 
-        $order->load(['patient.district', 'patient.area', 'branch', 'technician', 'coupon', 'items', 'statusLogs.changedBy', 'results']);
+        $order->load(['patient.district', 'branch', 'technician', 'coupon', 'items', 'statusLogs.changedBy', 'results']);
 
         return response()->json([
             'status'  => true,
@@ -206,7 +204,7 @@ class OrderController extends Controller
             'notes'              => "تم حذف ملف نتيجة التحليل: {$resultName}",
         ]);
 
-        $order->load(['patient.district', 'patient.area', 'branch', 'technician', 'coupon', 'items', 'statusLogs.changedBy', 'results']);
+        $order->load(['patient.district', 'branch', 'technician', 'coupon', 'items', 'statusLogs.changedBy', 'results']);
 
         return response()->json([
             'status'  => true,

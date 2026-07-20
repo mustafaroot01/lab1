@@ -125,7 +125,7 @@ class OtpAuthController extends Controller
             'expires_in'           => 2592000,
             'is_profile_completed' => (bool) $user->is_profile_completed,
             'next_step'            => $user->is_profile_completed ? 'home' : 'complete_profile',
-            'user'                 => new UserResource($user->load(['district.branch', 'area'])),
+            'user'                 => new UserResource($user->load(['district.branch'])),
         ]);
     }
 

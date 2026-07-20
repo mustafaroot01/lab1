@@ -154,6 +154,7 @@ declare module 'vue-router/auto-routes' {
     'patients-id': RouteRecordInfo<'patients-id', '/patients/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
     'register': RouteRecordInfo<'register', '/register', Record<never, never>, Record<never, never>>,
     'service-fees': RouteRecordInfo<'service-fees', '/service-fees', Record<never, never>, Record<never, never>>,
+    'settings-firebase': RouteRecordInfo<'settings-firebase', '/settings/firebase', Record<never, never>, Record<never, never>>,
     'settings-general': RouteRecordInfo<'settings-general', '/settings/general', Record<never, never>, Record<never, never>>,
     'settings-otp': RouteRecordInfo<'settings-otp', '/settings/otp', Record<never, never>, Record<never, never>>,
     'tables-data-table': RouteRecordInfo<'tables-data-table', '/tables/data-table', Record<never, never>, Record<never, never>>,

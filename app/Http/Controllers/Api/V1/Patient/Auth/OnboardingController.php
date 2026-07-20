@@ -14,9 +14,7 @@ class OnboardingController extends Controller
      */
     public function getOnboardingData()
     {
-        $districts = District::with(['areas' => function ($q) {
-            $q->where('is_active', true)->orderBy('sort_order');
-        }, 'branch'])
+        $districts = District::with(['branch'])
         ->where('is_active', true)
         ->orderBy('sort_order')
         ->get();

@@ -18,7 +18,7 @@ class UpdatePatientProfileRequest extends FormRequest
             'birth_date'  => 'nullable|date|before:today',
             'gender'      => 'nullable|in:male,female',
             'district_id' => 'nullable|exists:districts,id',
-            'area_id'     => 'nullable|exists:areas,id',
+            'address'     => 'nullable|string|max:500',
         ];
     }
 
@@ -31,7 +31,6 @@ class UpdatePatientProfileRequest extends FormRequest
             'birth_date.before'   => 'تاريخ الميلاد يجب أن يكون في الماضي',
             'gender.in'           => 'الجنس يجب أن يكون إما ذكر (male) أو أنثى (female)',
             'district_id.exists'  => 'القضاء المختار غير موجود في قاعدة البيانات',
-            'area_id.exists'      => 'المنطقة المختارة غير موجودة في قاعدة البيانات',
         ];
     }
 }

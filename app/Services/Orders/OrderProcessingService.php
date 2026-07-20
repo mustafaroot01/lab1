@@ -77,9 +77,9 @@ class OrderProcessingService
         if ($districtId) {
             $district = District::with('branch')->find($districtId);
             if ($district) {
-                $serviceFee = $district->service_fee !== null ? (float) $district->service_fee : ($district->branch ? (float) $district->branch->service_fee : 0.0);
+                $serviceFee = $district->branch ? (float) $district->branch->service_fee : 0.0;
                 $serviceFeeLabel = 'أجور الزيارة المنزلية (' . $district->name . ')';
-                $freeThresholdTarget = $district->free_threshold !== null ? (float) $district->free_threshold : ($district->branch ? (float) $district->branch->free_threshold : 0.0);
+                $freeThresholdTarget = $district->branch ? (float) $district->branch->free_threshold : 0.0;
 
                 if ($freeThresholdTarget > 0 && $subtotal >= $freeThresholdTarget) {
                     $serviceFee = 0.0;

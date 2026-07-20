@@ -58,8 +58,8 @@ class CreateOrderAction
         if ($dto->districtId) {
             $district = District::with('branch')->find($dto->districtId);
             if ($district) {
-                $serviceFee = $district->service_fee !== null ? (float) $district->service_fee : ($district->branch ? (float) $district->branch->service_fee : 0.0);
-                $freeThreshold = $district->free_threshold !== null ? (float) $district->free_threshold : ($district->branch ? (float) $district->branch->free_threshold : 0.0);
+                $serviceFee = $district->branch ? (float) $district->branch->service_fee : 0.0;
+                $freeThreshold = $district->branch ? (float) $district->branch->free_threshold : 0.0;
                 if ($freeThreshold > 0 && $subtotal >= $freeThreshold) {
                     $serviceFee = 0.0;
                 }
@@ -127,7 +127,6 @@ class CreateOrderAction
                 'user_id'         => $dto->user->id,
                 'branch_id'       => $resolvedBranchId,
                 'district_id'     => $dto->districtId,
-                'area_id'         => $dto->areaId,
                 'coupon_id'       => $couponId,
                 'status'          => 'pending',
                 'subtotal'        => $subtotal,
@@ -137,8 +136,6 @@ class CreateOrderAction
                 'visit_date'      => $dto->visitDate,
                 'visit_time'      => $dto->visitTime,
                 'visit_period'    => $dto->visitPeriod,
-                'lat'             => $dto->lat,
-                'lng'             => $dto->lng,
                 'address_text'    => $dto->addressText,
                 'doctor_name'     => $dto->doctorName,
                 'referral_image'  => $dto->referralImage,

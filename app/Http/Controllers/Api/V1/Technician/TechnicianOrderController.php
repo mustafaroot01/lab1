@@ -24,9 +24,7 @@ class TechnicianOrderController extends Controller
 
         $query = $technician->orders()
             ->with([
-                'patient:id,name,phone,district_id,area_id',
-                'patient.district:id,name',
-                'patient.area:id,name',
+                'patient:id,name,phone,district_id',
                 'branch:id,name_ar',
                 'technician:id,name',
                 'items',
@@ -70,9 +68,7 @@ class TechnicianOrderController extends Controller
         $order = $technician->orders()
             ->where('id', $id)
             ->with([
-                'patient:id,name,phone,district_id,area_id',
-                'patient.district:id,name',
-                'patient.area:id,name',
+                'patient:id,name,phone,district_id',
                 'branch:id,name_ar',
                 'technician:id,name,phone',
                 'coupon:id,code',
@@ -109,7 +105,7 @@ class TechnicianOrderController extends Controller
             return response()->json([
                 'status'  => true,
                 'message' => 'حالة الطلب الحالية هي بالفعل نفس الحالة المحددة',
-                'order'   => new OrderResource($order->load(['patient.district', 'patient.area', 'branch', 'technician', 'items'])),
+                'order'   => new OrderResource($order->load(['patient.district', 'branch', 'technician', 'items'])),
             ]);
         }
 
@@ -139,9 +135,7 @@ class TechnicianOrderController extends Controller
 
         // تحميل العلاقات لمنع Lazy Loading Exceptions أثناء إرجاع الـ Resource
         $order->load([
-            'patient:id,name,phone,district_id,area_id',
-            'patient.district:id,name',
-            'patient.area:id,name',
+            'patient:id,name,phone,district_id',
             'branch:id,name_ar',
             'technician:id,name,phone',
             'items',

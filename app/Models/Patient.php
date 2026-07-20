@@ -18,10 +18,7 @@ class Patient extends Authenticatable
         'birth_date',
         'gender',
         'district_id',
-        'area_id',
         'address',
-        'latitude',
-        'longitude',
         'is_profile_completed',
         'is_active',
         'agreed_to_terms',
@@ -43,19 +40,12 @@ class Patient extends Authenticatable
             'is_active'            => 'boolean',
             'agreed_to_terms'      => 'boolean',
             'otp_expires_at'       => 'datetime',
-            'latitude'             => 'float',
-            'longitude'            => 'float',
         ];
     }
 
     public function district(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(District::class);
-    }
-
-    public function area(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Area::class);
     }
 
     public function chronicDiseases(): \Illuminate\Database\Eloquent\Relations\HasMany

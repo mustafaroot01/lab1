@@ -20,7 +20,6 @@ class User extends Authenticatable
         'birth_date',
         'gender',
         'district_id',
-        'area_id',
         'is_profile_completed',
         'is_active',
         'agreed_to_terms',
@@ -50,11 +49,6 @@ class User extends Authenticatable
     public function district(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(District::class);
-    }
-
-    public function area(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Area::class);
     }
 
     public function chronicDiseases(): \Illuminate\Database\Eloquent\Relations\HasMany

@@ -22,7 +22,7 @@ class UpdatePatientRequest extends FormRequest
             'birth_date'  => 'nullable|date',
             'gender'      => 'nullable|in:male,female',
             'district_id' => 'nullable|exists:districts,id',
-            'area_id'     => 'nullable|exists:areas,id',
+            'address'     => 'nullable|string|max:500',
         ];
     }
 

@@ -27,7 +27,6 @@ const loading = ref(false)
 const saving = ref(false)
 const patients = ref<any[]>([])
 const allDistricts = ref<any[]>([])
-const availableAreas = ref<any[]>([])
 
 // شروط التصفية والبحث
 const searchQuery = ref('')
@@ -86,7 +85,7 @@ const editedItem = ref({
   birth_date: '',
   gender: 'male',
   district_id: null as number | null,
-  area_id: null as number | null,
+  address: '',
 })
 
 // جلب قائمة المرضى
@@ -138,16 +137,7 @@ const fetchDistricts = async () => {
   }
 }
 
-// تغيير القضاء عند التعديل لجلب مناطقه
-const onDistrictChange = () => {
-  editedItem.value.area_id = null
-  updateAvailableAreas()
-}
 
-const updateAvailableAreas = () => {
-  const dist = allDistricts.value.find(d => d.id === editedItem.value.district_id)
-  availableAreas.value = dist?.areas || []
-}
 
 // فتح نافذة التعديل
 const openEditDialog = (item: any) => {
@@ -158,9 +148,8 @@ const openEditDialog = (item: any) => {
     birth_date: item.birth_date || '',
     gender: item.gender || 'male',
     district_id: item.district_id || null,
-    area_id: item.area_id || null,
+    address: item.address || '',
   }
-  updateAvailableAreas()
   isDialogVisible.value = true
 }
 
@@ -526,7 +515,7 @@ onMounted(() => {
             <th>رقم الهاتف</th>
             <th>المواليد (العمر)</th>
             <th>الجنس</th>
-            <th>القضاء والمنطقة المخبرية</th>
+            <th>القضاء المخبري</th>
             <th>الفرع المسؤول</th>
             <th>حالة الحساب</th>
             <th>تاريخ الانضمام</th>
@@ -584,9 +573,6 @@ onMounted(() => {
             <td>
               <div class="font-weight-medium text-high-emphasis">
                 {{ item.district?.name || '—' }}
-              </div>
-              <div class="text-caption text-medium-emphasis">
-                {{ item.area?.name || 'غير محدد' }}
               </div>
             </td>
             <td>
@@ -696,18 +682,14 @@ onMounted(() => {
                 item-title="name"
                 item-value="id"
                 clearable
-                @update:model-value="onDistrictChange"
               />
             </VCol>
 
-            <VCol cols="12" md="6">
-              <AppSelect
-                v-model="editedItem.area_id"
-                label="المنطقة / الحي المخبري"
-                :items="availableAreas"
-                item-title="name"
-                item-value="id"
-                clearable
+            <VCol cols="12" md="12">
+              <AppTextField
+                v-model="editedItem.address"
+                label="العنوان التفصيلي"
+                placeholder="اسم الشارع، رقم الدار، أقرب نقطة دالة..."
               />
             </VCol>
           </VRow>

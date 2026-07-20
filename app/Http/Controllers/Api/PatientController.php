@@ -17,7 +17,7 @@ class PatientController extends Controller
      */
     public function index(Request $request)
     {
-        $query = \App\Queries\PatientSearch::run($request)->with(['district.branch', 'area'])->latest();
+        $query = \App\Queries\PatientSearch::run($request)->with(['district.branch'])->latest();
 
         // pagination اختياري — إذا أُرسل itemsPerPage نُقسّم، وإلا نرجع الكل (توافق مع الفرونت الحالي)
         if ($request->filled('itemsPerPage')) {
@@ -63,19 +63,13 @@ class PatientController extends Controller
     {
         $data = $request->validated();
 
-        if (isset($data['district_id'])) {
-            $targetAreaId = $data['area_id'] ?? $patient->area_id;
-            if ($targetAreaId && !\App\Models\Area::where('id', $targetAreaId)->where('district_id', $data['district_id'])->exists()) {
-                $data['area_id'] = null;
-            }
-        }
 
         $patient->update($data);
 
         return response()->json([
             'status'  => true,
             'message' => 'تم تحديث بيانات المريض بنجاح',
-            'data'    => new PatientResource($patient->fresh(['district.branch', 'area'])),
+            'data'    => new PatientResource($patient->fresh(['district.branch'])),
         ]);
     }
 
@@ -84,7 +78,7 @@ class PatientController extends Controller
      */
     public function show(Request $request, Patient $patient)
     {
-        $loadedPatient = $patient->load(['district.branch', 'area', 'chronicDiseases', 'medications', 'allergies']);
+        $loadedPatient = $patient->load(['district.branch', 'chronicDiseases', 'medications', 'allergies']);
 
         $ordersQuery = $patient->orders()
             ->with(['patient', 'branch', 'technician', 'items', 'results', 'statusLogs.changedBy', 'coupon'])
@@ -144,7 +138,7 @@ class PatientController extends Controller
             'message' => $patient->is_active
                 ? 'تم تفعيل حساب المريض بنجاح.'
                 : 'تم إيقاف حساب المريض وطرده من التطبيق فوراً (حذف جميع التوكنات).',
-            'data'    => new PatientResource($patient->fresh(['district.branch', 'area'])),
+            'data'    => new PatientResource($patient->fresh(['district.branch'])),
         ]);
     }
 

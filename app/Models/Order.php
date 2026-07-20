@@ -30,7 +30,6 @@ class Order extends Model
         'user_id',
         'branch_id',
         'district_id',
-        'area_id',
         'technician_id',
         'coupon_id',
         'status',
@@ -41,8 +40,6 @@ class Order extends Model
         'visit_date',
         'visit_time',
         'visit_period',
-        'lat',
-        'lng',
         'address_text',
         'doctor_name',
         'referral_image',
@@ -55,13 +52,10 @@ class Order extends Model
         return [
             'branch_id'       => 'integer',
             'district_id'     => 'integer',
-            'area_id'         => 'integer',
             'subtotal'        => 'float',
             'service_fee'     => 'float',
             'discount_amount' => 'float',
             'total'           => 'float',
-            'lat'             => 'float',
-            'lng'             => 'float',
             'visit_date'      => 'date',
         ];
     }
@@ -82,11 +76,6 @@ class Order extends Model
     public function district(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(District::class);
-    }
-
-    public function area(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Area::class);
     }
 
     public function technician(): \Illuminate\Database\Eloquent\Relations\BelongsTo

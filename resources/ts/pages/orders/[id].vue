@@ -241,9 +241,7 @@ const openWhatsApp = (phone: string) => {
 
 const openGoogleMaps = () => {
   if (!order.value) return
-  if (order.value.lat && order.value.lng && order.value.lat !== 0) {
-    window.open(`https://maps.google.com/?q=${order.value.lat},${order.value.lng}`, '_blank')
-  } else if (order.value.address_text) {
+  if (order.value.address_text) {
     window.open(`https://maps.google.com/?q=${encodeURIComponent(order.value.address_text)}`, '_blank')
   } else {
     toast('لا يوجد عنوان أو إحداثيات متاحة للفتح على الخريطة', 'warning')
@@ -693,8 +691,8 @@ onMounted(() => {
                 </div>
 
                 <div class="d-flex justify-space-between text-body-2">
-                  <span class="text-medium-emphasis">القضاء والمنطقة:</span>
-                  <span class="font-weight-bold">{{ order.user?.district_name || '—' }} / {{ order.user?.area_name || '—' }}</span>
+                  <span class="text-medium-emphasis">القضاء:</span>
+                  <span class="font-weight-bold">{{ order.user?.district_name || '—' }}</span>
                 </div>
 
                 <div v-if="order.doctor_name" class="d-flex justify-space-between text-body-2">

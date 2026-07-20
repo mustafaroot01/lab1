@@ -12,16 +12,12 @@ class District extends Model
         'name',
         'governorate',
         'branch_id',
-        'service_fee',
-        'free_threshold',
         'sort_order',
         'is_active',
     ];
 
     protected $casts = [
         'branch_id'      => 'integer',
-        'service_fee'    => 'float',
-        'free_threshold' => 'float',
         'sort_order'     => 'integer',
         'is_active'      => 'boolean',
     ];
@@ -34,10 +30,5 @@ class District extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
-    }
-
-    public function areas(): HasMany
-    {
-        return $this->hasMany(Area::class)->orderBy('sort_order');
     }
 }

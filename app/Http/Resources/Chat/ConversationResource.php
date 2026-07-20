@@ -17,7 +17,6 @@ class ConversationResource extends JsonResource
                 'name'     => $this->patient?->name,
                 'phone'    => $this->patient?->phone,
                 'district' => $this->patient && $this->patient->relationLoaded('district') ? $this->patient->district?->name_ar : null,
-                'area'     => $this->patient && $this->patient->relationLoaded('area') ? $this->patient->area?->name_ar : null,
                 'orders_count' => $this->patient?->orders_count ?? ($this->patient && $this->patient->relationLoaded('orders') ? $this->patient->orders->count() : 0),
             ],
             'closed_at' => $this->closed_at?->toIso8601String(),
