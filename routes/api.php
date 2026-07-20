@@ -303,6 +303,7 @@ Route::prefix('v1')->group(function () {
                 Route::put('update-profile', [\App\Http\Controllers\Api\V1\Patient\Auth\ProfileController::class, 'updateProfile']);
                 Route::put('profile', [\App\Http\Controllers\Api\V1\Patient\Auth\ProfileController::class, 'updateProfile']);
                 Route::get('me', [\App\Http\Controllers\Api\V1\Patient\Auth\ProfileController::class, 'me']);
+                Route::post('profile/fcm-token', [\App\Http\Controllers\Api\V1\Patient\Auth\ProfileController::class, 'updateFcmToken']);
                 Route::post('refresh-token', [\App\Http\Controllers\Api\V1\Patient\Auth\OtpAuthController::class, 'refreshToken']);
                 Route::post('logout', [\App\Http\Controllers\Api\V1\Patient\Auth\OtpAuthController::class, 'logout']);
                 Route::delete('delete-account', [\App\Http\Controllers\Api\V1\Patient\Auth\ProfileController::class, 'deleteAccount']);

@@ -243,7 +243,23 @@ const deleteBanner = async () => {
   }
 }
 
-onMounted(fetchBanners)
+// جلب قائمة الباقات لاستخدامها في البنرات
+const packagesList = ref<any[]>([])
+const fetchPackagesList = async () => {
+  try {
+    const res = await $api('/package-offers', { params: { itemsPerPage: -1, status: 'active' } })
+    if (res.status) {
+      packagesList.value = res.package_offers || []
+    }
+  } catch (e) {
+    console.error('Failed to fetch packages for banners:', e)
+  }
+}
+
+onMounted(() => {
+  fetchBanners()
+  fetchPackagesList()
+})
 </script>
 
 <template>
@@ -640,11 +656,14 @@ onMounted(fetchBanners)
                   class="mb-4"
                 />
 
-                <AppTextField
+                <AppAutocomplete
                   v-if="formLinkType === 'internal_offer'"
                   v-model="formLinkTarget"
+                  :items="packagesList"
+                  item-title="name_ar"
+                  item-value="id"
                   label="معرف العرض أو اسم الباقة في التطبيق *"
-                  placeholder="مثال: OFFER-2026 أو 15"
+                  placeholder="اختر الباقة من القائمة..."
                   prepend-inner-icon="tabler-discount-2"
                 />
 

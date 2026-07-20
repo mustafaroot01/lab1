@@ -83,6 +83,8 @@ class ProfileController extends Controller
             $user->update($updateData);
         }
 
+        return response()->json([
+            'status'  => true,
             'message' => 'تم تحديث بيانات الحساب بنجاح ✓',
             'user'    => new UserResource($user->fresh(['district.branch'])),
         ]);
@@ -104,6 +106,25 @@ class ProfileController extends Controller
         return response()->json([
             'status'  => true,
             'message' => 'تم استلام طلب حذف حسابك وتعطيله فوراً، وسيتم حذف بياناتك نهائياً من قبل الإدارة.',
+        ]);
+    }
+
+    /**
+     * تحديث أو حذف رمز FCM الخاص بالجهاز
+     */
+    public function updateFcmToken(Request $request)
+    {
+        $request->validate([
+            'fcm_token' => 'nullable|string'
+        ]);
+
+        $request->user()->update([
+            'fcm_token' => $request->input('fcm_token')
+        ]);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'FCM Token updated successfully'
         ]);
     }
 }

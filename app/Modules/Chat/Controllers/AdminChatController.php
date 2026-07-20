@@ -287,7 +287,6 @@ class AdminChatController extends Controller
     {
         $patient = Patient::with([
             'district:id,name',
-            'area:id,name',
             'chronicDiseases',
             'medications',
             'allergies',

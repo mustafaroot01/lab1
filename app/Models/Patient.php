@@ -25,9 +25,11 @@ class Patient extends Authenticatable
         'otp_code',
         'otp_expires_at',
         'notes',
+        'fcm_token',
     ];
 
     protected $hidden = [
+        'fcm_token',
         'remember_token',
         'otp_code',
     ];
@@ -66,6 +68,16 @@ class Patient extends Authenticatable
     public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Order::class, 'patient_id')->latest();
+    }
+
+    /**
+     * Route notifications for the Firebase channel.
+     *
+     * @return string|null
+     */
+    public function routeNotificationForFirebase()
+    {
+        return $this->fcm_token;
     }
 
     public function conversations(): \Illuminate\Database\Eloquent\Relations\HasMany
