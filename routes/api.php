@@ -171,6 +171,21 @@ Route::patch('orders/{order}/status', [\App\Http\Controllers\Api\OrderController
 Route::post('orders/{order}/results', [\App\Http\Controllers\Api\OrderController::class, 'storeResult']);
 Route::delete('orders/{order}/results/{result}', [\App\Http\Controllers\Api\OrderController::class, 'destroyResult']);
 
+    // ─── Chat System (Admin Dashboard) ────────────────────────
+    Route::prefix('admin/chat')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\ChatController::class, 'getConversations']);
+        Route::get('/canned-responses', [\App\Http\Controllers\Api\ChatController::class, 'getCannedResponses']);
+        Route::get('/patient/{patientId}/history', [\App\Http\Controllers\Api\ChatController::class, 'getPatientHistory']);
+        
+        Route::get('/{id}', [\App\Http\Controllers\Api\ChatController::class, 'openConversation']);
+        Route::get('/{id}/messages', [\App\Http\Controllers\Api\ChatController::class, 'getMessages']);
+        Route::post('/{id}/send', [\App\Http\Controllers\Api\ChatController::class, 'sendMessage']);
+        Route::post('/{id}/close', [\App\Http\Controllers\Api\ChatController::class, 'closeConversation']);
+        Route::post('/{id}/reopen', [\App\Http\Controllers\Api\ChatController::class, 'reopenConversation']);
+        Route::post('/{id}/claim', [\App\Http\Controllers\Api\ChatController::class, 'claimConversation']);
+        Route::post('/{id}/read', [\App\Http\Controllers\Api\ChatController::class, 'markAsRead']);
+    });
+
 }); // ─── نهاية مجموعة راوتات لوحة التحكم المحمية ──────────────────────────
 
 // Mobile Authentication & Unified Onboarding Flow (Delegating to clean modularized V1 Auth controllers for Zero Breaking Changes)
@@ -192,16 +207,7 @@ Route::prefix('mobile/auth')->group(function () {
     });
 });
 
-    // Chat System (Supabase Hybrid)
-    Route::prefix('chat')->middleware('auth:sanctum')->group(function () {
-        Route::get('conversations', [\App\Http\Controllers\Api\ChatController::class, 'getConversations']);
-        Route::get('patient/{patientId}/history', [\App\Http\Controllers\Api\ChatController::class, 'getPatientHistory']);
-        Route::get('messages', [\App\Http\Controllers\Api\ChatController::class, 'getMessages']);
-        Route::post('messages', [\App\Http\Controllers\Api\ChatController::class, 'sendMessage']);
-        Route::post('upload', [\App\Http\Controllers\Api\ChatController::class, 'uploadAttachment']);
-        Route::post('read', [\App\Http\Controllers\Api\ChatController::class, 'markAsRead']);
-        Route::post('conversations/{id}/close', [\App\Http\Controllers\Api\ChatController::class, 'closeConversation']);
-    });
+
 
 // Mobile Medical Records — السجل الدوائي والطبي للمريض (معزول معمارياً في V1/Patient/MedicalRecordController)
 Route::prefix('mobile/medical-records')->middleware('auth:sanctum')->group(function () {

@@ -8,8 +8,8 @@ use App\Http\Requests\Chat\GetMessagesRequest;
 use App\Http\Requests\Chat\SendMessageRequest;
 use App\Http\Requests\Chat\UploadAttachmentRequest;
 use App\Http\Requests\Chat\MarkAsReadRequest;
-use App\Http\Resources\Chat\ConversationResource;
-use App\Http\Resources\Chat\MessageResource;
+use Illuminate\Http\Request;
+use App\Models\Chat\CannedResponse;
 
 class ChatController extends Controller
 {
@@ -20,9 +20,6 @@ class ChatController extends Controller
         $this->chatService = $chatService;
     }
 
-    /**
-     * Get the current user type and ID based on authentication
-     */
     private function getCurrentUser()
     {
         $user = auth()->user();
@@ -30,7 +27,6 @@ class ChatController extends Controller
             abort(401, 'Unauthorized');
         }
 
-        // Determine user type (Patient vs Admin)
         $userType = ($user instanceof \App\Models\Admin || (method_exists($user, 'isAdmin') && $user->isAdmin())) ? 'Admin' : 'Patient';
         
         return [
@@ -40,138 +36,174 @@ class ChatController extends Controller
     }
 
     /**
-     * GET /chat/conversations
+     * GET /admin/chat
      */
-    public function getConversations()
+    public function getConversations(Request $request)
     {
-        $user = $this->getCurrentUser();
-        $conversations = $this->chatService->getUserConversations($user['id'], $user['type']);
+        $filters = $request->only(['status', 'assigned_status']);
+        $conversations = $this->chatService->getAllConversations($filters);
 
         return response()->json([
             'status' => true,
-            'message' => 'تم جلب المحادثات بنجاح',
-            'data' => ConversationResource::collection($conversations)
+            'conversations' => $conversations,
+            'meta' => ['has_more' => false] // To be implemented with pagination if needed
         ]);
     }
 
     /**
-     * GET /chat/patient/{patientId}/history
+     * GET /admin/chat/{id}
+     */
+    public function openConversation(string $id)
+    {
+        $conversationView = $this->chatService->openConversation($id);
+        
+        if (!$conversationView) {
+            return response()->json(['status' => false, 'message' => 'المحادثة غير موجودة'], 404);
+        }
+
+        return response()->json(array_merge(['status' => true], $conversationView->toArray()));
+    }
+
+    /**
+     * GET /admin/chat/patient/{patientId}/history
      */
     public function getPatientHistory(string $patientId)
     {
+        $history = $this->chatService->getPatientHistory($patientId);
+
+        return response()->json([
+            'status' => true,
+            'history' => $history,
+            'meta' => ['has_more' => false, 'total_count' => count($history)]
+        ]);
+    }
+
+    /**
+     * GET /admin/chat/{id}/messages
+     */
+    public function getMessages(string $id, Request $request)
+    {
+        $messages = $this->chatService->getMessages($id, $request->query('cursor'));
+
+        return response()->json([
+            'status' => true,
+            'messages' => $messages,
+            'meta' => ['has_more' => false]
+        ]);
+    }
+
+    /**
+     * POST /admin/chat/{id}/send
+     */
+    public function sendMessage(string $id, Request $request)
+    {
         $user = $this->getCurrentUser();
         
-        // Ensure only Admin can view other people's history (unless you want to add permissions)
-        if ($user['type'] !== 'Admin') {
-            return response()->json(['status' => false, 'message' => 'Not authorized'], 403);
+        // Use standard validation for rapid hybrid integration
+        $request->validate([
+            'body' => 'nullable|string',
+            'attachment' => 'nullable|file',
+            'client_message_id' => 'nullable|string'
+        ]);
+
+        $clientMessageId = $request->input('client_message_id', (string) \Illuminate\Support\Str::uuid());
+        
+        if ($request->hasFile('attachment')) {
+            $message = $this->chatService->sendImageMessage(
+                $id,
+                $user['type'],
+                $user['id'],
+                $request->file('attachment'),
+                $clientMessageId
+            );
+        } else {
+            $message = $this->chatService->sendTextMessage(
+                $id,
+                $user['type'],
+                $user['id'],
+                $request->input('body', ''),
+                $clientMessageId
+            );
         }
 
-        $conversations = $this->chatService->getPatientHistory($patientId);
-
         return response()->json([
             'status' => true,
-            'message' => 'تم جلب تاريخ المحادثات للمريض بنجاح',
-            'data' => ConversationResource::collection($conversations)
+            'data' => $message
         ]);
     }
 
     /**
-     * GET /chat/messages?conversation_id=xxx&before=xxx&limit=30
+     * POST /admin/chat/{id}/read
      */
-    public function getMessages(GetMessagesRequest $request)
-    {
-        $messages = $this->chatService->getMessages(
-            $request->validated('conversation_id'),
-            $request->validated('before')
-        );
-
-        return response()->json([
-            'status' => true,
-            'message' => 'تم جلب الرسائل بنجاح',
-            'data' => MessageResource::collection($messages)
-        ]);
-    }
-
-    /**
-     * POST /chat/messages
-     */
-    public function sendMessage(SendMessageRequest $request)
+    public function markAsRead(string $id, Request $request)
     {
         $user = $this->getCurrentUser();
-
-        $message = $this->chatService->sendTextMessage(
-            $request->validated('conversation_id'),
-            $user['type'],
-            $user['id'],
-            $request->validated('text'),
-            $request->validated('client_message_id')
-        );
-
-        return response()->json([
-            'status' => true,
-            'message' => 'تم إرسال الرسالة بنجاح',
-            'data' => new MessageResource($message)
-        ]);
-    }
-
-    /**
-     * POST /chat/upload
-     */
-    public function uploadAttachment(UploadAttachmentRequest $request)
-    {
-        $user = $this->getCurrentUser();
-
-        $message = $this->chatService->sendImageMessage(
-            $request->validated('conversation_id'),
-            $user['type'],
-            $user['id'],
-            $request->file('attachment'),
-            $request->validated('client_message_id')
-        );
-
-        return response()->json([
-            'status' => true,
-            'message' => 'تم رفع الصورة وإرسالها بنجاح',
-            'data' => new MessageResource($message)
-        ]);
-    }
-
-    /**
-     * POST /chat/read
-     */
-    public function markAsRead(MarkAsReadRequest $request)
-    {
-        $user = $this->getCurrentUser();
+        
+        $lastReadMsgId = $request->input('last_read_message_id', 'latest'); // Dummy for now since frontend doesn't pass it perfectly
 
         $success = $this->chatService->markAsRead(
-            $request->validated('conversation_id'),
+            $id,
             $user['type'],
             $user['id'],
-            $request->validated('last_read_message_id')
+            $lastReadMsgId
         );
 
-        return response()->json([
-            'status' => $success,
-            'message' => $success ? 'تم التحديث كمقروء' : 'فشل التحديث'
-        ]);
+        return response()->json(['status' => $success]);
     }
 
     /**
-     * POST /chat/conversations/{id}/close
+     * POST /admin/chat/{id}/close
      */
     public function closeConversation(string $id)
     {
-        // Only Admin usually closes chat, but we can verify auth
-        $user = $this->getCurrentUser();
-        if ($user['type'] !== 'Admin') {
-            return response()->json(['status' => false, 'message' => 'Not authorized'], 403);
-        }
-
         $success = $this->chatService->closeConversation($id);
 
         return response()->json([
             'status' => $success,
-            'message' => $success ? 'تم إغلاق الدردشة بنجاح' : 'فشل في إغلاق الدردشة'
+            'data' => ['closed_at' => now()->toIso8601String()]
+        ]);
+    }
+
+    /**
+     * POST /admin/chat/{id}/reopen
+     */
+    public function reopenConversation(string $id)
+    {
+        $success = $this->chatService->reopenConversation($id);
+
+        return response()->json([
+            'status' => $success,
+            'data' => ['closed_at' => null]
+        ]);
+    }
+
+    /**
+     * POST /admin/chat/{id}/claim
+     */
+    public function claimConversation(string $id)
+    {
+        $user = $this->getCurrentUser();
+        
+        $success = $this->chatService->claimConversation($id, $user['id']);
+
+        return response()->json([
+            'status' => $success,
+            'data' => [
+                'assigned_to' => $user['id'], // Typically would fetch the Admin name here
+                'is_assigned' => true,
+                'assigned_at' => now()->toIso8601String()
+            ]
+        ]);
+    }
+
+    /**
+     * GET /admin/chat/canned-responses
+     */
+    public function getCannedResponses()
+    {
+        return response()->json([
+            'status' => true,
+            'responses' => CannedResponse::where('is_active', true)->get(['id', 'title', 'content'])
         ]);
     }
 }

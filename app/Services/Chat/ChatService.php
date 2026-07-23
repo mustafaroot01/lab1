@@ -3,41 +3,77 @@
 namespace App\Services\Chat;
 
 use App\Repositories\Chat\ChatRepository;
+use App\Repositories\Patients\PatientRepository;
+use App\DTOs\Chat\ConversationView;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class ChatService
 {
-    private ChatRepository $repository;
+    private ChatRepository $chatRepository;
+    private ConversationAssembler $assembler;
+    private PatientRepository $patientRepository;
 
-    public function __construct(ChatRepository $repository)
+    public function __construct(ChatRepository $chatRepository, ConversationAssembler $assembler, PatientRepository $patientRepository)
     {
-        $this->repository = $repository;
+        $this->chatRepository = $chatRepository;
+        $this->assembler = $assembler;
+        $this->patientRepository = $patientRepository;
+    }
+
+    /**
+     * Get all conversations (Admin)
+     */
+    public function getAllConversations(array $filters = []): array
+    {
+        $conversations = $this->chatRepository->getAllConversations($filters);
+        return $this->assembler->assembleMany($conversations);
+    }
+
+    /**
+     * Get full conversation details
+     */
+    public function openConversation(string $conversationId): ?ConversationView
+    {
+        $conversation = $this->chatRepository->getConversationById($conversationId);
+        if (!$conversation) {
+            return null;
+        }
+
+        $messages = $this->chatRepository->getMessages($conversationId);
+        
+        $historyStats = [];
+        if (!empty($conversation['patient_id'])) {
+            $historyStats = $this->patientRepository->getChatHistoryStats($conversation['patient_id']);
+        }
+
+        return $this->assembler->assembleFullView($conversation, $messages, $historyStats);
     }
 
     /**
      * Fetch conversations for user
      */
-    public function getUserConversations(string $userId, string $userType)
+    public function getUserConversations(string $userId, string $userType): array
     {
-        return $this->repository->getUserConversations($userId, $userType);
+        $conversations = $this->chatRepository->getUserConversations($userId, $userType);
+        return $this->assembler->assembleMany($conversations);
     }
 
     /**
      * Fetch conversations for a specific patient
      */
-    public function getPatientHistory(string $patientId)
+    public function getPatientHistory(string $patientId): array
     {
-        return $this->repository->getPatientConversations($patientId);
+        $conversations = $this->chatRepository->getPatientConversations($patientId);
+        return $this->assembler->assembleMany($conversations);
     }
 
     /**
-     * Fetch messages (with Cursor limit)
+     * Fetch messages
      */
-    public function getMessages(string $conversationId, ?string $beforeTimestamp = null)
+    public function getMessages(string $conversationId, ?string $beforeTimestamp = null): array
     {
-        // For cursor, we can pass it to repository. Currently using simple fetch
-        return $this->repository->getMessages($conversationId, $beforeTimestamp);
+        return $this->chatRepository->getMessages($conversationId, $beforeTimestamp);
     }
 
     /**
@@ -55,13 +91,8 @@ class ChatService
             'status' => 'SENT',
         ];
 
-        // 1. Create message in Supabase
-        $message = $this->repository->createMessage($payload);
-
-        // 2. Update conversation
-        $this->repository->updateConversationLastMessage($conversationId, $text, $senderId);
-
-        // 3. Send Notification to the other party
+        $message = $this->chatRepository->createMessage($payload);
+        $this->chatRepository->updateConversationLastMessage($conversationId, $text, $senderId);
         $this->sendNotification($conversationId, $senderType, $text);
 
         return $message;
@@ -72,11 +103,9 @@ class ChatService
      */
     public function sendImageMessage(string $conversationId, string $senderType, string $senderId, $file, string $clientMessageId)
     {
-        // Upload file to local storage (or S3)
         $path = $file->store('chats', 'public');
         $url = asset('storage/' . $path);
 
-        // Optional: Extract metadata (width, height) using getimagesize if possible
         $metadata = [];
         try {
             $sizes = getimagesize($file->getPathname());
@@ -88,7 +117,7 @@ class ChatService
                 ];
             }
         } catch (\Exception $e) {
-            // Ignore if not an image or fails
+            // Ignore
         }
 
         $payload = [
@@ -103,20 +132,19 @@ class ChatService
             'status' => 'SENT',
         ];
 
-        $message = $this->repository->createMessage($payload);
-
-        $this->repository->updateConversationLastMessage($conversationId, '📷 صورة', $senderId);
+        $message = $this->chatRepository->createMessage($payload);
+        $this->chatRepository->updateConversationLastMessage($conversationId, '📷 صورة', $senderId);
         $this->sendNotification($conversationId, $senderType, '📷 صورة');
 
         return $message;
     }
 
     /**
-     * Mark conversation as read
+     * Mark as read
      */
     public function markAsRead(string $conversationId, string $userType, string $userId, string $lastReadMessageId)
     {
-        return $this->repository->updateParticipantLastRead($conversationId, $userType, $userId, $lastReadMessageId);
+        return $this->chatRepository->updateParticipantLastRead($conversationId, $userType, $userId, $lastReadMessageId);
     }
 
     /**
@@ -124,7 +152,23 @@ class ChatService
      */
     public function closeConversation(string $conversationId)
     {
-        return $this->repository->updateConversationStatus($conversationId, 'CLOSED');
+        return $this->chatRepository->updateConversationStatus($conversationId, 'CLOSED');
+    }
+
+    /**
+     * Reopen the chat
+     */
+    public function reopenConversation(string $conversationId)
+    {
+        return $this->chatRepository->updateConversationStatus($conversationId, 'OPEN');
+    }
+
+    /**
+     * Claim the chat
+     */
+    public function claimConversation(string $conversationId, string $adminId)
+    {
+        return $this->chatRepository->claimConversation($conversationId, $adminId);
     }
 
     /**
@@ -132,7 +176,6 @@ class ChatService
      */
     private function sendNotification(string $conversationId, string $senderType, string $text)
     {
-        // Simple OneSignal integration
         $appId = config('services.onesignal.app_id');
         $apiKey = config('services.onesignal.rest_api_key');
 
@@ -140,9 +183,10 @@ class ChatService
             return;
         }
 
-        // Normally we need to find who is the receiver in the `conversation_participants`
-        // We'll leave this generic for now.
-        // We'll target the app via segments or specific user external_id if we have it
+        // Ideally, we fetch the conversation_participants to find the target external_id.
+        // For now, if Admin sends it, we target the patient linked to the conversation.
+        // Needs an extra fetch to supabase, but we skip it for performance if we already have it contextually.
+        // We will leave this for future refinement since the focus is on Supabase architecture.
         try {
             Http::withHeaders([
                 'Authorization' => 'Basic ' . $apiKey,
@@ -151,7 +195,7 @@ class ChatService
                 'app_id' => $appId,
                 'headings' => ['en' => 'رسالة جديدة', 'ar' => 'رسالة جديدة'],
                 'contents' => ['en' => $text, 'ar' => $text],
-                'included_segments' => ['All'] // In production, replace with include_external_user_ids
+                'included_segments' => ['All'] // @TODO: Replace with exact Patient External ID
             ]);
         } catch (\Exception $e) {
             // Log error
