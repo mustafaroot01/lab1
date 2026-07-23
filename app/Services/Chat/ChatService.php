@@ -183,22 +183,31 @@ class ChatService
             return;
         }
 
-        // Ideally, we fetch the conversation_participants to find the target external_id.
-        // For now, if Admin sends it, we target the patient linked to the conversation.
-        // Needs an extra fetch to supabase, but we skip it for performance if we already have it contextually.
-        // We will leave this for future refinement since the focus is on Supabase architecture.
+        // Only send notification if Admin replies (send to patient)
+        if ($senderType !== 'Admin') {
+            return;
+        }
+
         try {
+            $conversation = $this->chatRepository->getConversationById($conversationId);
+            if (!$conversation || empty($conversation['patient_id'])) {
+                return;
+            }
+
+            $patientId = (string) $conversation['patient_id'];
+
             Http::withHeaders([
                 'Authorization' => 'Basic ' . $apiKey,
                 'Content-Type' => 'application/json'
             ])->post(config('services.onesignal.api_url', 'https://onesignal.com/api/v1/notifications'), [
                 'app_id' => $appId,
-                'headings' => ['en' => 'رسالة جديدة', 'ar' => 'رسالة جديدة'],
+                'headings' => ['en' => 'رسالة جديدة من الإدارة', 'ar' => 'رسالة جديدة من الإدارة'],
                 'contents' => ['en' => $text, 'ar' => $text],
-                'included_segments' => ['All'] // @TODO: Replace with exact Patient External ID
+                'include_external_user_ids' => [$patientId]
             ]);
         } catch (\Exception $e) {
             // Log error
+        }
         }
     }
 }
