@@ -21,14 +21,14 @@ class CoverageLogController extends Controller
             ->whereDate('created_at', $today)
             ->get();
 
-        $success = $logsToday->where('is_covered', 1)->count();
-        $rejected = $logsToday->where('is_covered', 0)->count();
-        $grace = $logsToday->where('match_type', 'grace_distance')->count();
+        $success = $logsToday->whereNotNull('matched_zone_id')->count();
+        $rejected = $logsToday->whereNull('matched_zone_id')->count();
+        $grace = $logsToday->where('grace_match', 1)->count();
         
         $avgTime = $logsToday->avg('execution_time_ms');
 
         $latestErrors = DB::table('coverage_verification_logs')
-            ->where('is_covered', 0)
+            ->whereNull('matched_zone_id')
             ->orWhere('execution_time_ms', '>', 50)
             ->orderBy('id', 'desc')
             ->take(10)
@@ -58,12 +58,16 @@ class CoverageLogController extends Controller
         $query = DB::table('coverage_verification_logs')->orderBy('id', 'desc');
 
         if ($request->filled('status')) {
-            if ($request->status === 'COVERED') $query->where('is_covered', 1);
-            if ($request->status === 'NOT_COVERED') $query->where('is_covered', 0);
+            if ($request->status === 'COVERED') $query->whereNotNull('matched_zone_id');
+            if ($request->status === 'NOT_COVERED') $query->whereNull('matched_zone_id');
         }
 
         if ($request->filled('match_type')) {
-            $query->where('match_type', $request->match_type);
+            if ($request->match_type === 'grace_distance') {
+                $query->where('grace_match', 1);
+            } else {
+                $query->where('inside_polygon', 1);
+            }
         }
 
         if ($request->filled('zone_id')) {
