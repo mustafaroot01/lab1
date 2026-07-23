@@ -19,7 +19,7 @@ class SupabaseSettingController extends Controller
             'status' => true,
             'message' => 'تم جلب إعدادات Supabase',
             'data' => [
-                'supabase_anon_key' => SystemSetting::get('supabase_anon_key', ''),
+                'supabase_anon_key' => SystemSetting::getValue('supabase_anon_key', ''),
                 // We return the URL from config just to show it, but it's not editable here
                 'supabase_url' => config('services.supabase.url'),
                 'is_configured' => !empty(config('services.supabase.url')) && !empty(config('services.supabase.service_role_key')),
