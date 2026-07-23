@@ -39,7 +39,11 @@ class CoverageZoneController extends Controller
         
         DB::transaction(function () use ($validated, $data) {
             if ($validated['coverage_type'] === 'POLYGON') {
-                $data['geometry'] = json_encode($validated['geojson']);
+                // Pass as array — the model cast 'json' will encode it automatically
+                // Passing json_encode() here causes double-encoding which breaks bounding box calculation
+                $data['geometry'] = is_string($validated['geojson'])
+                    ? json_decode($validated['geojson'], true)
+                    : $validated['geojson'];
             } else {
                 $data['geometry'] = "POINT({$validated['center_lng']} {$validated['center_lat']})";
             }
@@ -69,7 +73,10 @@ class CoverageZoneController extends Controller
                 $data['center_lng'] = $validated['center_lng'];
             }
             if ($validated['coverage_type'] === 'POLYGON') {
-                $data['geometry'] = json_encode($validated['geojson']);
+                // Pass as array — the model cast 'json' will encode it automatically
+                $data['geometry'] = is_string($validated['geojson'])
+                    ? json_decode($validated['geojson'], true)
+                    : $validated['geojson'];
             } else {
                 $data['geometry'] = "POINT({$validated['center_lng']} {$validated['center_lat']})";
             }
