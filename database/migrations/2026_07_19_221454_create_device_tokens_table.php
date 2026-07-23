@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('device_tokens', function (Blueprint $table) {
             $table->id();
             $table->morphs('tokenable'); // Adds tokenable_type and tokenable_id
-            $table->string('fcm_token')->unique();
+            $table->string('onesignal_player_id')->nullable()->unique(); // OneSignal Subscription ID
             $table->string('platform')->nullable(); // ios, android, web
             $table->string('app_version')->nullable();
             $table->string('device_name')->nullable();

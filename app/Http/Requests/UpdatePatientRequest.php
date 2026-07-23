@@ -21,7 +21,6 @@ class UpdatePatientRequest extends FormRequest
             'phone'       => 'required|string|max:25|unique:patients,phone,' . $userId,
             'birth_date'  => 'nullable|date',
             'gender'      => 'nullable|in:male,female',
-            'district_id' => 'nullable|exists:districts,id',
             'address'     => 'nullable|string|max:500',
         ];
     }

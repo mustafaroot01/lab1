@@ -14,7 +14,6 @@ class PatientSearch
     public static function run(Request $request): Builder
     {
         $search     = trim($request->get('search', ''));
-        $districtId = $request->get('district_id');
         $status     = $request->get('status');
         $gender     = $request->get('gender');
 
@@ -26,7 +25,6 @@ class PatientSearch
                         ->orWhere('id', $search);
                 });
             })
-            ->when($districtId, fn($q) => $q->where('district_id', $districtId))
             ->when($status, function ($q) use ($status) {
                 if ($status === 'completed') {
                     $q->where('is_profile_completed', true);

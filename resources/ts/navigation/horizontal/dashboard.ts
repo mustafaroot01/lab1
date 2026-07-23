@@ -1,7 +1,7 @@
 export default [
   {
-    title: 'لوحة تحكم Healthy Lab',
+    title: 'لوحة تحكم',
     icon: { icon: 'tabler-smart-home' },
-    to: 'dashboards-healthy-lab',
+    to: 'dashboards-lab',
   },
 ]

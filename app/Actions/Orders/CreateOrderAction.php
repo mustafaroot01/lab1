@@ -3,10 +3,8 @@
 namespace App\Actions\Orders;
 
 use App\DTOs\Orders\CreateOrderDTO;
-use App\Models\Branch;
 use App\Models\Coupon;
 use App\Models\CouponUsage;
-use App\Models\District;
 use App\Models\MedicalTest;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -51,40 +49,36 @@ class CreateOrderAction
             ];
         }
 
-        // 2. كلفة الخدمة وتحديد الفرع المسؤول آلياً (حسب القضاء المختار أو الفرع المحدد له)
+        // 2. كلفة الخدمة وتحديد المنطقة الجغرافية
         $serviceFee = 0.0;
-        $resolvedBranchId = $dto->branchId;
+        $coverageZoneId = null;
+        $coverageZoneSnapshot = null;
 
-        if ($dto->districtId) {
-            $district = District::with('branch')->find($dto->districtId);
-            if ($district) {
-                $serviceFee = $district->branch ? (float) $district->branch->service_fee : 0.0;
-                $freeThreshold = $district->branch ? (float) $district->branch->free_threshold : 0.0;
-                if ($freeThreshold > 0 && $subtotal >= $freeThreshold) {
-                    $serviceFee = 0.0;
-                }
-                // تعيين الفرع المسؤول تلقائياً من القضاء إذا لم يتم إرساله من التطبيق
-                if (!$resolvedBranchId && $district->branch_id) {
-                    $resolvedBranchId = $district->branch_id;
-                }
+        if ($dto->lat && $dto->lng) {
+            $engine = app(\App\Services\Coverage\Contracts\CoverageEngineInterface::class);
+            $coverage = $engine->verifyCoverage($dto->lat, $dto->lng, $dto->user->id);
+            
+            if (!$coverage->isCovered) {
+                throw new UnprocessableEntityHttpException($coverage->message ?? 'عذراً، الخدمة غير متوفرة في موقعك الحالي.');
             }
-        } elseif ($dto->branchId) {
-            $branch = Branch::find($dto->branchId);
-            if ($branch) {
-                $serviceFee = (float) ($branch->service_fee ?? 0);
-                if ($branch->free_threshold > 0 && $subtotal >= $branch->free_threshold) {
-                    $serviceFee = 0.0;
-                }
+            
+            $baseFee = (float) $coverage->fee;
+            $threshold = $coverage->freeVisitThreshold;
+            
+            if ($threshold !== null && $threshold > 0 && $subtotal >= $threshold) {
+                $serviceFee = 0.0;
+            } else {
+                $serviceFee = $baseFee;
             }
-        }
 
-        // إذا لم يتم تحديد فرع ولم يكن للقضاء فرع محدد، نربطه بالمختبر الوحيد النشط في النظام (Fallback to Single Lab)
-        if (!$resolvedBranchId) {
-            $resolvedBranchId = Branch::where('is_active', true)->value('id');
+            $coverageZoneId = $coverage->zone?->id;
+            $coverageZoneSnapshot = $coverage->zone ? json_encode($coverage->zone->toArray()) : null;
+        } else {
+            throw new UnprocessableEntityHttpException('يرجى تحديد موقعك على الخريطة لتحديد توفر الخدمة.');
         }
 
         // 3. حفظ الطلب في قاعدة البيانات ضمن transaction مع قفل صف الكوبون لمنع تجاوز الحد
-        $order = DB::transaction(function () use ($dto, $resolvedItems, $subtotal, $serviceFee, $resolvedBranchId) {
+        $order = DB::transaction(function () use ($dto, $resolvedItems, $subtotal, $serviceFee, $coverageZoneId, $coverageZoneSnapshot) {
             $couponId       = null;
             $discountAmount = 0.0;
 
@@ -125,8 +119,8 @@ class CreateOrderAction
             $order = Order::create([
                 'patient_id'      => $dto->user->id,
                 'user_id'         => $dto->user->id,
-                'branch_id'       => $resolvedBranchId,
-                'district_id'     => $dto->districtId,
+                'coverage_zone_id'=> $coverageZoneId,
+                'coverage_zone_snapshot' => $coverageZoneSnapshot,
                 'coupon_id'       => $couponId,
                 'status'          => 'pending',
                 'subtotal'        => $subtotal,
@@ -137,6 +131,12 @@ class CreateOrderAction
                 'visit_time'      => $dto->visitTime,
                 'visit_period'    => $dto->visitPeriod,
                 'address_text'    => $dto->addressText,
+                'lat'             => $dto->lat,
+                'lng'             => $dto->lng,
+                'building'        => $dto->building,
+                'floor'           => $dto->floor,
+                'apartment'       => $dto->apartment,
+                'landmark'        => $dto->landmark,
                 'doctor_name'     => $dto->doctorName,
                 'referral_image'  => $dto->referralImage,
                 'notes'           => $dto->notes,
@@ -171,7 +171,7 @@ class CreateOrderAction
             return $order;
         });
 
-        $order->load(['items', 'branch', 'coupon']);
+        $order->load(['items', 'coupon']);
 
         event(new \App\Events\OrderCreated($order));
         event(new \App\Events\OrderStatusChanged($order, \App\Enums\NotificationType::PENDING));

@@ -149,7 +149,7 @@ class TechnicianController extends Controller
         }
 
         $orders = (clone $ordersQuery)
-            ->with(['patient.district', 'branch', 'items', 'statusLogs.changedBy'])
+            ->with(['patient', 'items', 'statusLogs.changedBy'])
             ->latest()
             ->paginate($itemsPerPage);
 

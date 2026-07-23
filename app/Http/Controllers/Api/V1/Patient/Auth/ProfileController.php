@@ -48,8 +48,6 @@ class ProfileController extends Controller
             'name'                 => $request->input('name'),
             'birth_date'           => $request->input('birth_date'),
             'gender'               => $request->input('gender'),
-            'district_id'          => $request->input('district_id'),
-            'address'              => $request->input('address'),
             'is_profile_completed' => true,
         ]);
 
@@ -76,8 +74,6 @@ class ProfileController extends Controller
         if ($request->has('name'))        $updateData['name'] = $request->input('name');
         if ($request->has('birth_date'))  $updateData['birth_date'] = $request->input('birth_date');
         if ($request->has('gender'))      $updateData['gender'] = $request->input('gender');
-        if ($request->has('district_id')) $updateData['district_id'] = $request->input('district_id');
-        if ($request->has('address'))     $updateData['address'] = $request->input('address');
 
         if (!empty($updateData)) {
             $user->update($updateData);
@@ -106,25 +102,6 @@ class ProfileController extends Controller
         return response()->json([
             'status'  => true,
             'message' => 'تم استلام طلب حذف حسابك وتعطيله فوراً، وسيتم حذف بياناتك نهائياً من قبل الإدارة.',
-        ]);
-    }
-
-    /**
-     * تحديث أو حذف رمز FCM الخاص بالجهاز
-     */
-    public function updateFcmToken(Request $request)
-    {
-        $request->validate([
-            'fcm_token' => 'nullable|string'
-        ]);
-
-        $request->user()->update([
-            'fcm_token' => $request->input('fcm_token')
-        ]);
-
-        return response()->json([
-            'status'  => true,
-            'message' => 'FCM Token updated successfully'
         ]);
     }
 }

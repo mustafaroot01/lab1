@@ -33,6 +33,8 @@ class OrderResource extends JsonResource
 
             // الموقع
             'address_text' => $this->address_text,
+            'lat'          => $this->lat,
+            'lng'          => $this->lng,
 
             // معلومات إضافية
             'doctor_name'    => $this->doctor_name,
@@ -42,35 +44,20 @@ class OrderResource extends JsonResource
             'notes'          => $this->notes,
             'cancel_reason'  => $this->cancel_reason,
 
-            'district_id' => $this->district_id ?? ($this->patient?->district_id ?? null),
-
-            // العلاقات
             'patient'    => $this->whenLoaded('patient', function () {
-                $district = ($this->relationLoaded('district') && $this->district) ? $this->district : (($this->patient->relationLoaded('district')) ? $this->patient->district : null);
-
                 return [
                     'id'            => $this->patient->id,
                     'name'          => $this->patient->name,
                     'phone'         => $this->patient->phone,
-                    'district_name' => $district ? ($district->name_ar ?? $district->name) : '—',
                 ];
             }),
             'user'       => $this->whenLoaded('patient', function () {
-                $district = ($this->relationLoaded('district') && $this->district) ? $this->district : (($this->patient->relationLoaded('district')) ? $this->patient->district : null);
-
                 return [
                     'id'            => $this->patient->id,
                     'name'          => $this->patient->name,
                     'phone'         => $this->patient->phone,
-                    'district_name' => $district ? ($district->name_ar ?? $district->name) : '—',
                 ];
             }),
-
-            'branch'     => $this->whenLoaded('branch', fn() => [
-                'id'      => $this->branch->id,
-                'name_ar' => $this->branch->name_ar,
-                'phone'   => $this->branch->phone,
-            ]),
             'technician' => $this->whenLoaded('technician', fn() => [
                 'id'    => $this->technician->id,
                 'name'  => $this->technician->name,

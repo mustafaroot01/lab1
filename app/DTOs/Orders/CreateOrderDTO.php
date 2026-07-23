@@ -9,8 +9,6 @@ class CreateOrderDTO
 {
     public function __construct(
         public readonly User|\App\Models\Patient $user,
-        public readonly ?int $branchId,
-        public readonly ?int $districtId,
         public readonly ?string $couponCode,
         public readonly array $items,
         public readonly string $visitDate,
@@ -20,6 +18,14 @@ class CreateOrderDTO
         public readonly ?string $doctorName,
         public readonly ?string $referralImage,
         public readonly ?string $notes,
+        
+        // New spatial fields
+        public readonly ?float $lat = null,
+        public readonly ?float $lng = null,
+        public readonly ?string $building = null,
+        public readonly ?string $floor = null,
+        public readonly ?string $apartment = null,
+        public readonly ?string $landmark = null,
     ) {}
 
     /**
@@ -30,8 +36,6 @@ class CreateOrderDTO
         $user = $request->user();
         return new self(
             user: $user,
-            branchId: $request->filled('branch_id') ? (int) $request->branch_id : null,
-            districtId: $request->filled('district_id') ? (int) $request->district_id : ($user->district_id ?? null),
             couponCode: $request->filled('coupon_code') ? strtoupper(trim($request->coupon_code)) : null,
             items: is_array($request->items) ? $request->items : [],
             visitDate: (string) $request->visit_date,
@@ -41,6 +45,13 @@ class CreateOrderDTO
             doctorName: $request->input('doctor_name'),
             referralImage: $request->input('referral_image'),
             notes: $request->input('notes'),
+            
+            lat: $request->filled('lat') ? (float) $request->lat : null,
+            lng: $request->filled('lng') ? (float) $request->lng : null,
+            building: $request->input('building'),
+            floor: $request->input('floor'),
+            apartment: $request->input('apartment'),
+            landmark: $request->input('landmark'),
         );
     }
 }

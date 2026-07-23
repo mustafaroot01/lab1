@@ -64,21 +64,32 @@ export default [
     to: 'banners',
   },
 
-  { heading: 'المناطق والفروع والفنيون' },
+  { heading: 'التغطية الجغرافية والفنيون' },
   {
-    title: 'إدارة الفروع المخبرية ',
-    icon: { icon: 'tabler-building-store' },
-    to: 'branches',
-  },
-  {
-    title: 'الأقضية والمناطق (التغطية) ',
-    icon: { icon: 'tabler-map-pins' },
-    to: 'districts',
-  },
-  {
-    title: 'كلفة ورسوم الخدمة لكل فرع ',
-    icon: { icon: 'tabler-coin' },
-    to: 'service-fees',
+    title: 'نظام التغطية الجغرافية',
+    icon: { icon: 'tabler-map-search' },
+    children: [
+      {
+        title: 'لوحة القيادة (Dashboard)',
+        to: 'coverage-dashboard',
+      },
+      {
+        title: 'إدارة المناطق (Zones)',
+        to: 'coverage-zones',
+      },
+      {
+        title: 'أداة المحاكاة (Simulator)',
+        to: 'coverage-simulator',
+      },
+      {
+        title: 'سجلات الأداء (Logs)',
+        to: 'coverage-logs',
+      },
+      {
+        title: 'إعدادات التغطية (Settings)',
+        to: 'coverage-settings',
+      },
+    ],
   },
   {
     title: 'إدارة الفنيين الميدانيين ',
@@ -115,9 +126,14 @@ export default [
     to: 'settings-otp',
   },
   {
-    title: 'إعدادات إشعارات فايربيس (FCM)',
+    title: 'إعدادات الإشعارات (OneSignal)',
     icon: { icon: 'tabler-bell-ringing' },
-    to: 'settings-firebase',
+    to: 'settings-onesignal',
+  },
+  {
+    title: 'إعدادات الدردشة (Supabase)',
+    icon: { icon: 'tabler-database' },
+    to: 'settings-supabase',
   },
 ]
 

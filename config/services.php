@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    'onesignal' => [
+        'app_id' => env('ONESIGNAL_APP_ID'),
+        'rest_api_key' => env('ONESIGNAL_REST_API_KEY'),
+        'api_url' => env('ONESIGNAL_API_URL', 'https://onesignal.com/api/v1/notifications'),
+    ],
+
+    'supabase' => [
+        'url' => env('SUPABASE_URL'),
+        'service_role_key' => env('SUPABASE_SERVICE_ROLE_KEY'),
+    ],
+
 ];

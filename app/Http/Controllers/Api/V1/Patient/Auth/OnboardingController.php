@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Patient\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\DistrictResource;
-use App\Models\District;
+
 use App\Models\LegalPage;
 
 class OnboardingController extends Controller
@@ -14,10 +13,7 @@ class OnboardingController extends Controller
      */
     public function getOnboardingData()
     {
-        $districts = District::with(['branch'])
-        ->where('is_active', true)
-        ->orderBy('sort_order')
-        ->get();
+        $districts = [];
 
         $termsPage = LegalPage::where('slug', 'terms')->first();
         $privacyPage = LegalPage::where('slug', 'privacy')->first();
@@ -25,7 +21,7 @@ class OnboardingController extends Controller
         return response()->json([
             'status'     => true,
             'message'    => 'تم جلب بيانات التسجيل بنجاح',
-            'districts'  => DistrictResource::collection($districts),
+            'districts'  => $districts,
             'terms'      => $termsPage ? [
                 'title'   => $termsPage->title,
                 'content' => $termsPage->content,

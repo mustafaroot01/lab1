@@ -23,6 +23,8 @@ class GeneralSettingResource extends JsonResource
             'package_offers_active' => filter_var($this->resource['package_offers_active'] ?? true, FILTER_VALIDATE_BOOLEAN),
             'chat_active'           => filter_var($this->resource['chat_active'] ?? true, FILTER_VALIDATE_BOOLEAN),
             'maintenance_mode'      => filter_var($this->resource['maintenance_mode'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            'supabase_url'          => (string) ($this->resource['supabase_url'] ?? ''),
+            'supabase_anon_key'     => (string) ($this->resource['supabase_anon_key'] ?? ''),
         ];
     }
 }

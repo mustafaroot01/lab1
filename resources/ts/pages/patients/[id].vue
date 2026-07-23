@@ -37,7 +37,6 @@ const ordersPerPage = ref(10)
 // أعمدة جدول سجل الطلبات
 const ordersHeaders = [
   { title: '# رقم الطلب', key: 'id' },
-  { title: 'الفرع المسؤول', key: 'branch' },
   { title: 'الفني المكلف بالزيارة', key: 'technician' },
   { title: 'موعد الزيارة المحدد', key: 'visit_date' },
   { title: 'المبلغ', key: 'total' },
@@ -51,7 +50,6 @@ const filteredOrders = computed(() => {
   const q = ordersSearch.value.toLowerCase().trim()
   return orders.value.filter(o => 
     String(o.id).includes(q) ||
-    o.branch?.name_ar?.toLowerCase().includes(q) ||
     o.technician?.name?.toLowerCase().includes(q) ||
     o.status_label?.toLowerCase().includes(q) ||
     o.visit_date?.includes(q)
@@ -556,37 +554,7 @@ onMounted(() => {
             </VCardText>
           </VCard>
 
-          <!-- بطاقة التغطية الجغرافية والفرع المسؤول -->
-          <VCard title="التغطية الجغرافية والفرع">
-            <VDivider />
-            <VCardText class="pa-6">
-              <VList class="card-list density-compact pa-0" style="--v-card-list-gap: 0.8rem;">
-                <VListItem class="px-0">
-                  <VListItemTitle>
-                    <span class="text-h6 font-weight-medium me-2">القضاء:</span>
-                    <span class="text-body-1 text-high-emphasis font-weight-bold">{{ patient.district?.name || 'غير محدد' }}</span>
-                  </VListItemTitle>
-                </VListItem>
 
-                <VListItem class="px-0">
-                  <VListItemTitle>
-                    <span class="text-h6 font-weight-medium me-2">المنطقة السكنية:</span>
-                    <span class="text-body-1 text-high-emphasis font-weight-bold">{{ patient.area?.name || 'غير محدد' }}</span>
-                  </VListItemTitle>
-                </VListItem>
-
-                <VListItem class="px-0">
-                  <VListItemTitle class="d-flex align-center flex-wrap gap-2">
-                    <span class="text-h6 font-weight-medium me-1">الفرع المسؤول:</span>
-                    <VChip v-if="patient.assigned_branch" color="primary" variant="tonal" size="small" label class="font-weight-bold">
-                      {{ patient.assigned_branch.name_ar }}
-                    </VChip>
-                    <span v-else class="text-body-1 text-high-emphasis font-weight-bold">الفرع الرئيسي</span>
-                  </VListItemTitle>
-                </VListItem>
-              </VList>
-            </VCardText>
-          </VCard>
         </VCol>
 
         <!-- العمود الأيمن: السجل الطبي الشامل (الأمراض، الأدوية، الحساسية) -->
@@ -871,14 +839,6 @@ onMounted(() => {
                 <RouterLink :to="`/orders/${item.id}`" class="font-weight-bold text-primary text-decoration-none text-body-1">
                   #{{ item.id }}
                 </RouterLink>
-              </template>
-
-              <!-- الفرع -->
-              <template #item.branch="{ item }">
-                <VChip v-if="item.branch" color="primary" variant="tonal" size="small" label>
-                  {{ item.branch.name_ar }}
-                </VChip>
-                <span v-else class="text-caption text-medium-emphasis">الفرع الرئيسي</span>
               </template>
 
               <!-- الفني المكلف -->

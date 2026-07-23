@@ -35,6 +35,7 @@ const fetchOrder = async () => {
     const res = await $api(`/orders/${orderId}`)
     if (res?.status && res.order) {
       order.value = res.order
+      selectedTechId.value = res.order.technician_id
     } else {
       toast('لم يتم العثور على الطلب', 'error')
       router.push('/orders')
@@ -49,7 +50,7 @@ const fetchOrder = async () => {
 // ─── جلب الفنيين ────────────────────────────────────────────────
 const fetchTechnicians = async () => {
   try {
-    const res = await $api('/technicians')
+    const res = await $api('/technicians?itemsPerPage=-1')
     technicians.value = (res?.technicians || res?.data || []).filter((t: any) => t.is_active || t.status === 'active' || true)
   } catch {}
 }
@@ -62,7 +63,11 @@ const technicianOptions = computed(() => [
   }))
 ])
 
-// ─── نافذة تحديث الحالة وتعيين الفني ──────────────────────────────
+
+
+// ─── تغيير مباشر للفني من كارت الفني ──────────────────────────────
+const changingTech = ref(false)
+const selectedTechId = ref<number | null>(null)
 const statusDialog = ref({
   show: false,
   loading: false,
@@ -120,9 +125,7 @@ const updateStatus = async () => {
   }
 }
 
-// ─── تغيير مباشر للفني من كارت الفني ──────────────────────────────
-const changingTech = ref(false)
-const selectedTechId = ref<number | null>(null)
+// ─── نافذة تحديث الحالة وتعيين الفني ──────────────────────────────
 
 const quickAssignTechnician = async () => {
   if (!order.value) return
@@ -407,7 +410,7 @@ onMounted(() => {
                     </tr>
                     <tr>
                       <td class="py-1 text-medium-emphasis">
-                        أجور الزيارة المنزلية <span class="text-caption text-primary font-weight-bold" v-if="order.branch">({{ order.branch.name_ar }})</span>:
+                        أجور الزيارة المنزلية:
                       </td>
                       <td class="py-1 text-end font-weight-medium">
                         <VChip v-if="order.service_fee == 0" size="small" color="success" variant="tonal" class="font-weight-bold">
@@ -671,18 +674,19 @@ onMounted(() => {
 
               <!-- معلومات الموقع الجغرافي والفرع -->
               <div class="d-flex flex-column gap-y-3">
-                <div class="d-flex justify-space-between align-center">
-                  <h6 class="text-h6 font-weight-bold mb-0">العنوان الجغرافي والنطاق</h6>
-                </div>
-
-                <div class="d-flex justify-space-between text-body-2">
-                  <span class="text-medium-emphasis">الفرع المختص:</span>
-                  <span class="font-weight-bold">{{ order.branch?.name_ar || 'الفرع الرئيسي' }}</span>
-                </div>
-
-                <div class="d-flex justify-space-between text-body-2">
-                  <span class="text-medium-emphasis">القضاء:</span>
-                  <span class="font-weight-bold">{{ order.user?.district_name || '—' }}</span>
+                <div class="d-flex justify-space-between align-center mb-1">
+                  <h6 class="text-h6 font-weight-bold mb-0">الموقع الجغرافي للطالب</h6>
+                  <VBtn
+                    v-if="order.lat && order.lng"
+                    size="small"
+                    variant="elevated"
+                    color="primary"
+                    prepend-icon="tabler-map-pin"
+                    :href="`https://www.google.com/maps/dir/?api=1&destination=${order.lat},${order.lng}`"
+                    target="_blank"
+                  >
+                    توجيه / فتح الخريطة
+                  </VBtn>
                 </div>
 
                 <div v-if="order.doctor_name" class="d-flex justify-space-between text-body-2">
@@ -757,9 +761,11 @@ onMounted(() => {
 
               <VDivider />
 
-              <!-- تغيير أو تعيين الفني مع بحث واختيار -->
+              <!-- تغيير أو تعيين الفني والفرع مع بحث واختيار -->
               <div>
-                <div class="text-caption font-weight-bold text-medium-emphasis mb-2">تغيير أو تعيين فني للطلب (ابحث واختار):</div>
+
+
+                <div class="text-caption font-weight-bold text-medium-emphasis mb-2 mt-4">تعيين فني للطلب (ابحث واختار):</div>
                 <AppAutocomplete
                   v-model="selectedTechId"
                   :items="technicianOptions"

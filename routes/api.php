@@ -11,12 +11,11 @@ use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\LegalPageController;
 use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\ContactInfoController;
-use App\Http\Controllers\Api\DistrictController;
 use App\Http\Controllers\Api\AreaController;
 use App\Http\Controllers\Api\OtpSettingController;
 use App\Http\Controllers\Api\GeneralSettingController;
 use App\Http\Controllers\Api\PatientController;
-use App\Http\Controllers\Api\FirebaseSettingController;
+use App\Http\Controllers\Api\OneSignalSettingController;
 
 // ─── راوتات عامة (يستهلكها تطبيق الموبايل بدون تسجيل دخول) ──────────────────────
 Route::get('medical-dictionary/patient-catalog', [\App\Http\Controllers\Api\V1\Admin\MedicalDictionary\MedicalTestController::class, 'patientCatalog']);
@@ -24,7 +23,6 @@ Route::apiResource('banners', BannerController::class)->only(['index', 'show']);
 Route::apiResource('faqs', FaqController::class)->only(['index', 'show']);
 Route::apiResource('legal-pages', LegalPageController::class)->only(['index', 'show']);
 Route::apiResource('contact-infos', ContactInfoController::class)->only(['index', 'show']);
-Route::apiResource('districts', DistrictController::class)->only(['index', 'show']);
 Route::get('settings/general', [GeneralSettingController::class, 'index']);
 
 // Popup Stories Mobile API — إعلانات الستوري الطولية للموبايل
@@ -84,10 +82,6 @@ Route::prefix('package-offers')->group(function () {
     Route::delete('/{id}', [PackageOfferController::class, 'destroy']);
 });
 
-// Branches — إدارة الفروع
-Route::apiResource('branches', BranchController::class);
-Route::patch('branches/{branch}/toggle-active', [BranchController::class, 'toggleActive']);
-
 // Technicians — إدارة الفنيين
 Route::apiResource('technicians', TechnicianController::class);
 Route::patch('technicians/{technician}/toggle-status', [TechnicianController::class, 'toggleStatus']);
@@ -114,12 +108,17 @@ Route::apiResource('faqs', FaqController::class)->except(['index', 'show']);
 Route::apiResource('contact-infos', ContactInfoController::class)->except(['index', 'show']);
 Route::patch('contact-infos/{contact_info}/toggle-active', [ContactInfoController::class, 'toggleActive']);
 
-// Districts & Areas — إدارة الأقضية والمناطق وتغطية الخدمة
-Route::apiResource('districts', DistrictController::class)->except(['index', 'show']);
-Route::patch('districts/{district}/toggle-active', [DistrictController::class, 'toggleActive']);
 
-Route::apiResource('areas', AreaController::class)->except(['index', 'show']);
-Route::patch('areas/{area}/toggle-active', [AreaController::class, 'toggleActive']);
+
+// Coverage Zones — إدارة مناطق التغطية الجغرافية
+Route::apiResource('coverage-zones', \App\Http\Controllers\Api\CoverageZoneController::class)->except(['show', 'create', 'edit']);
+Route::post('coverage/check', [\App\Http\Controllers\Api\CoverageController::class, 'check']);
+Route::get('coverage-settings', [\App\Http\Controllers\Api\CoverageSettingsController::class, 'index']);
+Route::put('coverage-settings', [\App\Http\Controllers\Api\CoverageSettingsController::class, 'update']);
+Route::post('coverage-settings/clear-cache', [\App\Http\Controllers\Api\CoverageSettingsController::class, 'clearCache']);
+// IMPORTANT: specific sub-routes must come BEFORE the general GET index route
+Route::get('coverage-logs/kpis', [\App\Http\Controllers\Api\CoverageLogController::class, 'dashboardKpis']);
+Route::get('coverage-logs', [\App\Http\Controllers\Api\CoverageLogController::class, 'index']);
 
 // Settings — إعدادات النظام وخدمة الـ OTP
 Route::prefix('settings/otp')->group(function () {
@@ -132,12 +131,17 @@ Route::prefix('settings/general')->group(function () {
     Route::match(['post', 'put'], '/', [GeneralSettingController::class, 'update']);
 });
 
-// Firebase Settings
-Route::prefix('settings/firebase')->group(function () {
-    Route::get('/', [\App\Http\Controllers\Api\FirebaseSettingController::class, 'getSettings']);
-    Route::post('/', [\App\Http\Controllers\Api\FirebaseSettingController::class, 'saveSettings']);
-    Route::post('/test', [\App\Http\Controllers\Api\FirebaseSettingController::class, 'testNotification']);
-});
+    Route::prefix('settings/onesignal')->group(function () {
+        Route::get('/', [OneSignalSettingController::class, 'getSettings']);
+        Route::post('/', [OneSignalSettingController::class, 'saveSettings']);
+        Route::post('/test', [OneSignalSettingController::class, 'testNotification']);
+    });
+
+    Route::prefix('settings/supabase')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\SupabaseSettingController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Api\SupabaseSettingController::class, 'update']);
+        Route::post('/test', [\App\Http\Controllers\Api\SupabaseSettingController::class, 'testConnection']);
+    });
 
 // Patients — إدارة المرضى والزبائن المسجلين وسجلاتهم الطبية
 Route::apiResource('patients', PatientController::class);
@@ -158,7 +162,9 @@ Route::patch('branch-service-fees/{branch}', [\App\Http\Controllers\Api\BranchSe
 Route::get('dashboard/stats', [\App\Http\Controllers\Api\DashboardController::class, 'stats']);
 Route::get('admin/dashboard/stats', [\App\Http\Controllers\Api\DashboardController::class, 'stats']);
 
-// ─── Dashboard Orders — إدارة الطلبات من لوحة التحكم ─────────────────────
+
+
+    // ─── Dashboard Orders — إدارة الطلبات من لوحة التحكم ─────────────────────
 Route::get('orders', [\App\Http\Controllers\Api\OrderController::class, 'index']);
 Route::get('orders/{order}', [\App\Http\Controllers\Api\OrderController::class, 'show']);
 Route::patch('orders/{order}/status', [\App\Http\Controllers\Api\OrderController::class, 'updateStatus']);
@@ -186,6 +192,17 @@ Route::prefix('mobile/auth')->group(function () {
     });
 });
 
+    // Chat System (Supabase Hybrid)
+    Route::prefix('chat')->middleware('auth:sanctum')->group(function () {
+        Route::get('conversations', [\App\Http\Controllers\Api\ChatController::class, 'getConversations']);
+        Route::get('patient/{patientId}/history', [\App\Http\Controllers\Api\ChatController::class, 'getPatientHistory']);
+        Route::get('messages', [\App\Http\Controllers\Api\ChatController::class, 'getMessages']);
+        Route::post('messages', [\App\Http\Controllers\Api\ChatController::class, 'sendMessage']);
+        Route::post('upload', [\App\Http\Controllers\Api\ChatController::class, 'uploadAttachment']);
+        Route::post('read', [\App\Http\Controllers\Api\ChatController::class, 'markAsRead']);
+        Route::post('conversations/{id}/close', [\App\Http\Controllers\Api\ChatController::class, 'closeConversation']);
+    });
+
 // Mobile Medical Records — السجل الدوائي والطبي للمريض (معزول معمارياً في V1/Patient/MedicalRecordController)
 Route::prefix('mobile/medical-records')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [\App\Http\Controllers\Api\V1\Patient\MedicalRecordController::class, 'index']);
@@ -206,13 +223,15 @@ Route::prefix('mobile')->middleware('throttle:60,1')->group(function () {
     Route::post('/cart/preview', [\App\Http\Controllers\Api\Mobile\CartController::class, 'previewCart']);
     Route::post('/coupon/validate', [\App\Http\Controllers\Api\Mobile\CouponController::class, 'validateCoupon']);
     Route::get('/branches/{branch}/availability', \App\Http\Controllers\Api\Mobile\BranchAvailabilityController::class);
+    // فحص التغطية الجغرافية من تطبيق المريض (قبل السلة)
+    Route::post('/coverage/check', [\App\Http\Controllers\Api\Mobile\CoverageCheckController::class, 'check']);
 
     // يتطلب تسجيل دخول
     Route::middleware(['auth:sanctum', 'patient.active'])->group(function () {
         Route::post('/orders/upload-referral', [\App\Http\Controllers\Api\Mobile\ReferralController::class, 'uploadReferralImage']);
         Route::post('/orders', [\App\Http\Controllers\Api\Mobile\OrderController::class, 'store']);
         Route::get('/orders', [\App\Http\Controllers\Api\Mobile\OrderController::class, 'myOrders']);
-        Route::get('/orders/{id}', [\App\Http\Controllers\Api\V1\Patient\OrderController::class, 'show']);
+        Route::get('/orders/{id}', [\App\Http\Controllers\Api\Mobile\OrderController::class, 'show']);
         
         // Device Tokens & Notifications (FCM)
         Route::post('/device-token', [\App\Http\Controllers\Api\V1\Mobile\DeviceTokenController::class, 'store']);
@@ -229,43 +248,8 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [\App\Http\Controllers\Api\AdminAuthController::class, 'me']);
         Route::post('/logout', [\App\Http\Controllers\Api\AdminAuthController::class, 'logout']);
-        Route::get('/settings/system', [\App\Http\Controllers\Api\SystemSettingController::class, 'index']);
-        Route::post('/settings/system', [\App\Http\Controllers\Api\SystemSettingController::class, 'store']);
     });
 });
-
-// ─── Chat Module — موديول الدردشة (معزول معمارياً في مجلد Modules/Chat) ─────────
-// تقديم مرفقات الدردشة من القرص الخاص عبر رابط موقّت موقّع (30 دقيقة) — يمنع الوصول العام
-Route::get('chat/attachments/{message}', [\App\Http\Controllers\Api\ChatAttachmentController::class, 'show'])
-    ->middleware('signed')
-    ->name('chat.attachment');
-
-// راوتات الموبايل (المريض)
-Route::prefix('mobile/chat')->middleware('throttle:30,1')->group(function () {
-    Route::middleware(['auth:sanctum', 'patient.active'])->group(function () {
-        Route::get('/', [\App\Modules\Chat\Controllers\MobileChatController::class, 'show']);
-        Route::get('/messages', [\App\Modules\Chat\Controllers\MobileChatController::class, 'loadMoreMessages']);
-        Route::post('/send', [\App\Modules\Chat\Controllers\MobileChatController::class, 'send']);
-        Route::post('/read', [\App\Modules\Chat\Controllers\MobileChatController::class, 'markRead']);
-        Route::get('/history', [\App\Modules\Chat\Controllers\MobileChatController::class, 'history']);
-    });
-});
-
-// راوتات لوحة التحكم (الأدمن)
-Route::prefix('admin/chat')->middleware('auth:sanctum', 'role:admin', 'throttle:60,1')->group(function () {
-    Route::get('/', [\App\Modules\Chat\Controllers\AdminChatController::class, 'index']);
-    Route::get('/canned-responses', [\App\Modules\Chat\Controllers\AdminChatController::class, 'cannedResponses']);
-    Route::get('/patient/{patientId}/history', [\App\Modules\Chat\Controllers\AdminChatController::class, 'patientHistory']);
-    Route::get('/patient/{patientId}/profile', [\App\Modules\Chat\Controllers\AdminChatController::class, 'patientProfile']);
-    Route::get('/{conversation}', [\App\Modules\Chat\Controllers\AdminChatController::class, 'show']);
-    Route::get('/{conversation}/messages', [\App\Modules\Chat\Controllers\AdminChatController::class, 'loadMoreMessages']);
-    Route::post('/{conversation}/send', [\App\Modules\Chat\Controllers\AdminChatController::class, 'send']);
-    Route::post('/{conversation}/claim', [\App\Modules\Chat\Controllers\AdminChatController::class, 'claim']);
-    Route::post('/{conversation}/close', [\App\Modules\Chat\Controllers\AdminChatController::class, 'close']);
-    Route::post('/{conversation}/reopen', [\App\Modules\Chat\Controllers\AdminChatController::class, 'reopen']);
-    Route::post('/{conversation}/read', [\App\Modules\Chat\Controllers\AdminChatController::class, 'markRead']);
-});
-
 // ─── API Version 1 (V1) — واجهات المراجعين والفنيين بالإصدار الرسمي الأول ──────────
 Route::prefix('v1')->group(function () {
     // 1. واجهات الفني الميداني (Technician Mobile API v1)
@@ -303,7 +287,6 @@ Route::prefix('v1')->group(function () {
                 Route::put('update-profile', [\App\Http\Controllers\Api\V1\Patient\Auth\ProfileController::class, 'updateProfile']);
                 Route::put('profile', [\App\Http\Controllers\Api\V1\Patient\Auth\ProfileController::class, 'updateProfile']);
                 Route::get('me', [\App\Http\Controllers\Api\V1\Patient\Auth\ProfileController::class, 'me']);
-                Route::post('profile/fcm-token', [\App\Http\Controllers\Api\V1\Patient\Auth\ProfileController::class, 'updateFcmToken']);
                 Route::post('refresh-token', [\App\Http\Controllers\Api\V1\Patient\Auth\OtpAuthController::class, 'refreshToken']);
                 Route::post('logout', [\App\Http\Controllers\Api\V1\Patient\Auth\OtpAuthController::class, 'logout']);
                 Route::delete('delete-account', [\App\Http\Controllers\Api\V1\Patient\Auth\ProfileController::class, 'deleteAccount']);

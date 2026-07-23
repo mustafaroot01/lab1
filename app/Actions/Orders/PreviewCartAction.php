@@ -13,8 +13,8 @@ class PreviewCartAction
     /**
      * تنفيذ حسابات ملخص السلة وأجور الزيارة والخصم
      */
-    public function execute(float $subtotal, ?int $branchId, ?string $couponCode, ?int $districtId = null): array
+    public function execute(float $subtotal, ?string $couponCode, ?float $lat = null, ?float $lng = null, bool $hasLabItems = false): array
     {
-        return $this->orderService->calculateCartPreview($subtotal, $branchId, $couponCode, $districtId);
+        return $this->orderService->calculateCartPreview($subtotal, $couponCode, $lat, $lng, $hasLabItems);
     }
 }

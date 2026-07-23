@@ -15,9 +15,10 @@ class CartController extends Controller
     {
         $result = $action->execute(
             (float) $request->subtotal,
-            $request->branch_id,
             $request->coupon_code,
-            $request->district_id
+            $request->filled('lat') ? (float) $request->lat : null,
+            $request->filled('lng') ? (float) $request->lng : null,
+            $request->hasLabItems(),  // هل السلة تحتوي تحاليل مخبرية؟
         );
 
         return response()->json($result);

@@ -28,8 +28,6 @@ class Order extends Model
     protected $fillable = [
         'patient_id',
         'user_id',
-        'branch_id',
-        'district_id',
         'technician_id',
         'coupon_id',
         'status',
@@ -45,13 +43,19 @@ class Order extends Model
         'referral_image',
         'notes',
         'cancel_reason',
+        'lat',
+        'lng',
+        'coverage_zone_id',
+        'coverage_zone_snapshot',
+        'building',
+        'floor',
+        'apartment',
+        'landmark',
     ];
 
     protected function casts(): array
     {
         return [
-            'branch_id'       => 'integer',
-            'district_id'     => 'integer',
             'subtotal'        => 'float',
             'service_fee'     => 'float',
             'discount_amount' => 'float',
@@ -66,16 +70,6 @@ class Order extends Model
     public function patient(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Patient::class, 'patient_id');
-    }
-
-    public function branch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Branch::class);
-    }
-
-    public function district(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(District::class);
     }
 
     public function technician(): \Illuminate\Database\Eloquent\Relations\BelongsTo

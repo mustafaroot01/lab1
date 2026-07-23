@@ -10,7 +10,7 @@ class DeviceToken extends Model
     protected $fillable = [
         'tokenable_type',
         'tokenable_id',
-        'fcm_token',
+        'onesignal_player_id',
         'platform',
         'app_version',
         'device_name',
@@ -22,7 +22,7 @@ class DeviceToken extends Model
     {
         return [
             'last_used_at' => 'datetime',
-            'is_active' => 'boolean',
+            'is_active'    => 'boolean',
         ];
     }
 

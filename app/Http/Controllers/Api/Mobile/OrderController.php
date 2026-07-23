@@ -37,7 +37,7 @@ class OrderController extends Controller
         $orders = Order::where(function($q) use ($request) {
                 $q->where('patient_id', $request->user()->id)->orWhere('user_id', $request->user()->id);
             })
-            ->with(['patient.district', 'items', 'branch', 'technician'])
+            ->with(['patient', 'items', 'technician'])
             ->withCount('items')
             ->latest()
             ->paginate(15);
@@ -63,7 +63,7 @@ class OrderController extends Controller
                 $q->where('patient_id', $request->user()->id)->orWhere('user_id', $request->user()->id);
             })
             ->where('id', $id)
-            ->with(['patient.district', 'items', 'branch', 'technician', 'coupon', 'results', 'statusLogs.changedBy'])
+            ->with(['patient', 'items', 'technician', 'coupon', 'results', 'statusLogs.changedBy'])
             ->firstOrFail();
 
 

@@ -15,7 +15,6 @@ class OrderSearch
     {
         $search   = trim($request->get('search') ?: $request->get('q', ''));
         $status   = $request->get('status');
-        $branchId = $request->get('branch_id');
         $date     = $request->get('visit_date') ?: $request->get('date');
 
         return Order::query()
@@ -31,7 +30,6 @@ class OrderSearch
                 });
             })
             ->when($status && $status !== 'all', fn($q) => $q->where('status', $status))
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->when($date, fn($q) => $q->whereDate('visit_date', $date));
     }
 }

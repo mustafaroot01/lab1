@@ -171,7 +171,6 @@ class OtpAuthController extends Controller
         $user = $request->user();
         
         if ($user) {
-            $user->update(['fcm_token' => null]);
             $user->currentAccessToken()?->delete();
         }
 

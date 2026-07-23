@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Cache;
 
 class SystemSetting extends Model
 {
-    protected $fillable = ['key', 'value'];
+    protected $fillable = ['key', 'value', 'type', 'group', 'description'];
 
     public static function getValue($key, $default = null)
     {

@@ -7,9 +7,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+use App\Traits\HasPushNotifications;
+
 class Patient extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasPushNotifications;
 
     protected $fillable = [
         'name',
@@ -17,7 +19,6 @@ class Patient extends Authenticatable
         'email',
         'birth_date',
         'gender',
-        'district_id',
         'address',
         'is_profile_completed',
         'is_active',
@@ -25,11 +26,10 @@ class Patient extends Authenticatable
         'otp_code',
         'otp_expires_at',
         'notes',
-        'fcm_token',
+        'registration_status',
     ];
 
     protected $hidden = [
-        'fcm_token',
         'remember_token',
         'otp_code',
     ];
@@ -43,11 +43,6 @@ class Patient extends Authenticatable
             'agreed_to_terms'      => 'boolean',
             'otp_expires_at'       => 'datetime',
         ];
-    }
-
-    public function district(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(District::class);
     }
 
     public function chronicDiseases(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -68,16 +63,6 @@ class Patient extends Authenticatable
     public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Order::class, 'patient_id')->latest();
-    }
-
-    /**
-     * Route notifications for the Firebase channel.
-     *
-     * @return string|null
-     */
-    public function routeNotificationForFirebase()
-    {
-        return $this->fcm_token;
     }
 
     public function conversations(): \Illuminate\Database\Eloquent\Relations\HasMany

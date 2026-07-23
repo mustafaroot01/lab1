@@ -1,5 +1,4 @@
 import { $api } from '@/utils/api'
-import { getEcho } from '@/plugins/echo'
 
 type Conversation = {
   id: number
@@ -94,7 +93,6 @@ export const useChatStore = defineStore('chat', {
   }),
   actions: {
     async fetchConversations(params?: { q?: string; status?: string; assigned_status?: string }) {
-      this.initRealtimeListeners()
       this.fetchCannedResponses()
       this.loading = true
       this.conversationsCursor = null
@@ -352,89 +350,12 @@ export const useChatStore = defineStore('chat', {
       }
     },
 
-    initRealtimeListeners() {
-      if (this.listening) return
-      const echo = getEcho()
-      if (!echo) return
-
-      this.listening = true
-
-      echo.private('private-admin-chat')
-        .listen('.MessageCreated', (data: { message: ChatMessage; conversation: Conversation }) => {
-          if (!data || !data.message || !data.conversation) return
-
-          // إذا كانت المحادثة مفتوحة أمام المشرف الآن
-          if (this.activeChat && this.activeChat.conversation.id === data.message.conversation_id) {
-            const exists = this.activeChat.messages.some(m => m.id === data.message.id)
-            if (!exists) {
-              this.activeChat.messages.push(data.message)
-            }
-            this.activeChat.conversation.last_message_at = data.conversation.last_message_at
-            this.activeChat.conversation.last_message_preview = data.conversation.last_message_preview
-          }
-
-          // تحديث قائمة المحادثات الجانبية
-          const convIndex = this.conversations.findIndex(c => c.id === data.conversation.id)
-          if (convIndex !== -1) {
-            const conv = this.conversations[convIndex]
-            conv.last_message_at = data.conversation.last_message_at
-            conv.last_message_preview = data.conversation.last_message_preview
-
-            // زيادة العداد فقط إذا لم يرسلها المشرف ولم يكن فاتحاً لهذه المحادثة
-            if (!data.message.is_admin && (!this.activeChat || this.activeChat.conversation.id !== conv.id)) {
-              conv.unread_count = (conv.unread_count || 0) + 1
-            }
-
-            // نقل المحادثة إلى أعلى القائمة
-            this.conversations.splice(convIndex, 1)
-            this.conversations.unshift(conv)
-          } else {
-            // محادثة جديدة كلياً، تضاف لأعلى القائمة
-            this.conversations.unshift(data.conversation)
-          }
-        })
-        .listen('.ConversationAssigned', (data: { conversation: Conversation }) => {
-          if (!data || !data.conversation) return
-
-          if (this.activeChat && this.activeChat.conversation.id === data.conversation.id) {
-            this.activeChat.conversation.assigned_to = data.conversation.assigned_to
-            this.activeChat.conversation.assigned_at = data.conversation.assigned_at
-            this.activeChat.conversation.is_assigned = data.conversation.is_assigned
-          }
-
-          const conv = this.conversations.find(c => c.id === data.conversation.id)
-          if (conv) {
-            conv.assigned_to = data.conversation.assigned_to
-            conv.is_assigned = data.conversation.is_assigned
-          }
-        })
-        .listen('.ConversationRead', (data: { conversation_id: number; admin_last_read_message_id?: number; patient_last_read_message_id?: number }) => {
-          if (!data || !data.conversation_id) return
-
-          if (this.activeChat && this.activeChat.conversation.id === data.conversation_id) {
-            if (data.admin_last_read_message_id !== undefined)
-              this.activeChat.conversation.admin_last_read_message_id = data.admin_last_read_message_id
-            if (data.patient_last_read_message_id !== undefined)
-              this.activeChat.conversation.patient_last_read_message_id = data.patient_last_read_message_id
-          }
-
-          const conv = this.conversations.find(c => c.id === data.conversation_id)
-          if (conv) {
-            if (data.admin_last_read_message_id !== undefined)
-              conv.admin_last_read_message_id = data.admin_last_read_message_id
-            if (data.patient_last_read_message_id !== undefined)
-              conv.patient_last_read_message_id = data.patient_last_read_message_id
-          }
-        })
+    async connectToChatSocket() {
+      // Echo functionality has been moved to Supabase Realtime
     },
 
-    stopRealtimeListeners() {
-      if (!this.listening) return
-      const echo = getEcho()
-      if (echo) {
-        echo.leave('private-admin-chat')
-      }
-      this.listening = false
+    async disconnectFromChatSocket() {
+      // Echo functionality has been moved to Supabase Realtime
     },
   },
 })

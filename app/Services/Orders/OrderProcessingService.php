@@ -3,8 +3,6 @@
 namespace App\Services\Orders;
 
 use App\Models\Coupon;
-use App\Models\Branch;
-use App\Models\District;
 use Illuminate\Http\UploadedFile;
 
 class OrderProcessingService
@@ -66,46 +64,54 @@ class OrderProcessingService
     /**
      * حساب تفاصيل فاتورة السلة ومعاينة أجور الزيارة وتطبيق الخصم
      */
-    public function calculateCartPreview(float $subtotal, ?int $branchId, ?string $couponCode, ?int $districtId = null): array
+    public function calculateCartPreview(float $subtotal, ?string $couponCode, ?float $lat = null, ?float $lng = null, bool $hasLabItems = false): array
     {
-        $serviceFee = 0.0;
-        $serviceFeeLabel = 'أجور الزيارة المنزلية';
+        $deliveryFee = 0.0;
+        $deliveryFeeLabel = 'أجور الزيارة المنزلية';
         $isFreeVisit = false;
-        $freeThresholdTarget = 0.0;
-        $amountLeftForFreeVisit = 0.0;
+        $remainingForFreeVisit = 0.0;
 
-        if ($districtId) {
-            $district = District::with('branch')->find($districtId);
-            if ($district) {
-                $serviceFee = $district->branch ? (float) $district->branch->service_fee : 0.0;
-                $serviceFeeLabel = 'أجور الزيارة المنزلية (' . $district->name . ')';
-                $freeThresholdTarget = $district->branch ? (float) $district->branch->free_threshold : 0.0;
-
-                if ($freeThresholdTarget > 0 && $subtotal >= $freeThresholdTarget) {
-                    $serviceFee = 0.0;
-                    $isFreeVisit = true;
-                } elseif ($freeThresholdTarget > 0 && $subtotal < $freeThresholdTarget) {
-                    $amountLeftForFreeVisit = round($freeThresholdTarget - $subtotal, 2);
-                }
+        if ($hasLabItems) {
+            // إذا السلة تحتوي تحاليل، الموقع مطلوب إلزامياً
+            if (!$lat || !$lng) {
+                return [
+                    'status'         => false,
+                    'requires_location' => true,
+                    'message'        => 'الرجاء تحديد موقعك على الخريطة لاحتساب أجور الزيارة المنزلية للتحاليل.',
+                ];
             }
-        } elseif ($branchId) {
-            $branch = Branch::find($branchId);
-            if ($branch) {
-                $serviceFee = (float) ($branch->service_fee ?? 0);
-                $serviceFeeLabel = 'أجور الزيارة المنزلية (' . $branch->name_ar . ')';
-                $freeThresholdTarget = (float) ($branch->free_threshold ?? 0);
 
-                if ($freeThresholdTarget > 0 && $subtotal >= $freeThresholdTarget) {
-                    $serviceFee = 0.0;
-                    $isFreeVisit = true;
-                } elseif ($freeThresholdTarget > 0 && $subtotal < $freeThresholdTarget) {
-                    $amountLeftForFreeVisit = round($freeThresholdTarget - $subtotal, 2);
+            $engine   = app(\App\Services\Coverage\Contracts\CoverageEngineInterface::class);
+            $coverage = $engine->verifyCoverage($lat, $lng);
+
+            if ($coverage->isCovered) {
+                $baseFee = $coverage->fee ?? 0.0;
+                $deliveryFeeLabel = 'أجور الزيارة المنزلية (' . ($coverage->zone?->name ?? 'منطقة مغطاة') . ')';
+                $threshold = $coverage->freeVisitThreshold;
+
+                if ($threshold !== null && $threshold > 0) {
+                    if ($subtotal >= $threshold) {
+                        $deliveryFee = 0.0;
+                        $isFreeVisit = true;
+                        $remainingForFreeVisit = 0.0;
+                    } else {
+                        $deliveryFee = $baseFee;
+                        $isFreeVisit = false;
+                        $remainingForFreeVisit = max(0, $threshold - $subtotal);
+                    }
+                } else {
+                    $deliveryFee = $baseFee;
+                    if ($deliveryFee <= 0) {
+                        $isFreeVisit = true;
+                    }
                 }
+            } else {
+                return [
+                    'status'  => false,
+                    'covered' => false,
+                    'message' => $coverage->message ?? 'عذراً، الخدمة غير متوفرة في موقعك الحالي.',
+                ];
             }
-        }
-
-        if ($serviceFee <= 0) {
-            $isFreeVisit = true;
         }
 
         $hasCoupon = false;
@@ -130,18 +136,17 @@ class OrderProcessingService
             }
         }
 
-        $total = max(0, $subtotal + $serviceFee - $discountAmount);
+        $total = max(0, $subtotal + $deliveryFee - $discountAmount);
 
         return [
             'status'         => true,
             'message'        => 'تم حساب ملخص الفاتورة بنجاح',
             'cart_breakdown' => [
                 'subtotal'                   => $subtotal,
-                'service_fee'                => $serviceFee,
-                'service_fee_label'          => $serviceFeeLabel,
+                'delivery_fee'               => $deliveryFee,
+                'delivery_fee_label'         => $deliveryFeeLabel,
                 'is_free_visit'              => $isFreeVisit,
-                'free_threshold_target'      => $freeThresholdTarget,
-                'amount_left_for_free_visit' => $amountLeftForFreeVisit,
+                'remaining_for_free_visit'   => $remainingForFreeVisit,
                 'has_coupon'                 => $hasCoupon,
                 'coupon_code'                => $validCouponCode,
                 'discount_amount'            => $discountAmount,

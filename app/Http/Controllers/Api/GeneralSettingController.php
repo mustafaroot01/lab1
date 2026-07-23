@@ -26,6 +26,8 @@ class GeneralSettingController extends Controller
             'package_offers_active' => SystemSetting::getBoolean('package_offers_active', true),
             'chat_active'           => SystemSetting::getBoolean('chat_active', true),
             'maintenance_mode'      => SystemSetting::getBoolean('maintenance_mode', false),
+            'supabase_url'          => config('services.supabase.url'),
+            'supabase_anon_key'     => SystemSetting::get('supabase_anon_key', ''),
         ];
 
         return response()->json([
@@ -82,6 +84,8 @@ class GeneralSettingController extends Controller
             'package_offers_active' => SystemSetting::getBoolean('package_offers_active', true),
             'chat_active'           => SystemSetting::getBoolean('chat_active', true),
             'maintenance_mode'      => SystemSetting::getBoolean('maintenance_mode', false),
+            'supabase_url'          => config('services.supabase.url'),
+            'supabase_anon_key'     => SystemSetting::get('supabase_anon_key', ''),
         ];
 
         return response()->json([

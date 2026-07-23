@@ -26,11 +26,9 @@ const confirmDialog = ref({
 const loading = ref(false)
 const saving = ref(false)
 const patients = ref<any[]>([])
-const allDistricts = ref<any[]>([])
 
 // شروط التصفية والبحث
 const searchQuery = ref('')
-const selectedDistrictFilter = ref<number | null>(null)
 const selectedStatusFilter = ref<string | null>(null)
 const selectedGenderFilter = ref<string | null>(null)
 
@@ -43,7 +41,7 @@ const paginatedPatients = computed(() => {
   return patients.value.slice(start, start + itemsPerPage.value)
 })
 
-watch([searchQuery, selectedDistrictFilter, selectedStatusFilter, selectedGenderFilter, itemsPerPage], () => {
+watch([searchQuery, selectedStatusFilter, selectedGenderFilter, itemsPerPage], () => {
   page.value = 1
 })
 
@@ -84,7 +82,6 @@ const editedItem = ref({
   phone: '',
   birth_date: '',
   gender: 'male',
-  district_id: null as number | null,
   address: '',
 })
 
@@ -94,7 +91,6 @@ const fetchPatients = async () => {
   try {
     const params = new URLSearchParams()
     if (searchQuery.value) params.append('search', searchQuery.value)
-    if (selectedDistrictFilter.value) params.append('district_id', String(selectedDistrictFilter.value))
     if (selectedStatusFilter.value) params.append('status', selectedStatusFilter.value)
     if (selectedGenderFilter.value) params.append('gender', selectedGenderFilter.value)
 
@@ -119,25 +115,10 @@ const fetchPatients = async () => {
 // إعادة ضبط جميع الفلاتر
 const resetFilters = () => {
   searchQuery.value = ''
-  selectedDistrictFilter.value = null
   selectedStatusFilter.value = null
   selectedGenderFilter.value = null
   fetchPatients()
 }
-
-// جلب الأقضية لتعبئة القوائم المنسدلة
-const fetchDistricts = async () => {
-  try {
-    const res = await $api('/districts')
-    if (res?.status) {
-      allDistricts.value = res.districts || []
-    }
-  } catch (e) {
-    //
-  }
-}
-
-
 
 // فتح نافذة التعديل
 const openEditDialog = (item: any) => {
@@ -147,7 +128,6 @@ const openEditDialog = (item: any) => {
     phone: item.phone,
     birth_date: item.birth_date || '',
     gender: item.gender || 'male',
-    district_id: item.district_id || null,
     address: item.address || '',
   }
   isDialogVisible.value = true
@@ -258,7 +238,6 @@ const revokePatientTokens = (item: any) => {
 
 onMounted(() => {
   fetchPatients()
-  fetchDistricts()
 })
 </script>
 
@@ -405,7 +384,7 @@ onMounted(() => {
     <VCard class="mb-6">
       <VCardText>
         <VRow>
-          <VCol cols="12" md="3">
+          <VCol cols="12" md="4">
             <AppTextField
               v-model="searchQuery"
               placeholder="البحث بالاسم أو الهاتف أو ID..."
@@ -417,18 +396,6 @@ onMounted(() => {
           </VCol>
 
           <VCol cols="12" md="3">
-            <AppSelect
-              v-model="selectedDistrictFilter"
-              :items="allDistricts"
-              item-title="name"
-              item-value="id"
-              placeholder="تصفية حسب القضاء"
-              clearable
-              @update:model-value="fetchPatients"
-            />
-          </VCol>
-
-          <VCol cols="12" md="2">
             <AppSelect
               v-model="selectedStatusFilter"
               :items="[
@@ -444,7 +411,7 @@ onMounted(() => {
             />
           </VCol>
 
-          <VCol cols="12" md="2">
+          <VCol cols="12" md="3">
             <AppSelect
               v-model="selectedGenderFilter"
               :items="[
@@ -515,8 +482,6 @@ onMounted(() => {
             <th>رقم الهاتف</th>
             <th>المواليد (العمر)</th>
             <th>الجنس</th>
-            <th>القضاء المخبري</th>
-            <th>الفرع المسؤول</th>
             <th>حالة الحساب</th>
             <th>تاريخ الانضمام</th>
             <th class="text-center">الإجراءات</th>
@@ -569,23 +534,6 @@ onMounted(() => {
                 />
                 {{ item.gender_text }}
               </VChip>
-            </td>
-            <td>
-              <div class="font-weight-medium text-high-emphasis">
-                {{ item.district?.name || '—' }}
-              </div>
-            </td>
-            <td>
-              <VChip
-                v-if="item.assigned_branch"
-                color="info"
-                variant="tonal"
-                size="small"
-                prepend-icon="tabler-building-store"
-              >
-                {{ item.assigned_branch.name_ar }}
-              </VChip>
-              <span v-else class="text-medium-emphasis text-caption">—</span>
             </td>
             <td>
               <VChip
@@ -673,18 +621,6 @@ onMounted(() => {
                 ]"
               />
             </VCol>
-
-            <VCol cols="12" md="6">
-              <AppSelect
-                v-model="editedItem.district_id"
-                label="القضاء المخبري"
-                :items="allDistricts"
-                item-title="name"
-                item-value="id"
-                clearable
-              />
-            </VCol>
-
             <VCol cols="12" md="12">
               <AppTextField
                 v-model="editedItem.address"

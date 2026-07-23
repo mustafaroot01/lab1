@@ -15,7 +15,7 @@ export const redirects: RouteRecordRaw[] = [
       const userRole = userData.value?.role
 
       if (userRole === 'admin' || userRole === 'super_admin' || (userData.value && useCookie('accessToken').value))
-        return { name: 'dashboards-healthy-lab' }
+        return { name: 'dashboards-lab' }
       if (userRole === 'client')
         return { name: 'access-control' }
 
@@ -59,9 +59,9 @@ export const routes: RouteRecordRaw[] = [
   },
 
   {
-    path: '/dashboards/healthy-lab',
-    name: 'dashboards-healthy-lab',
-    component: () => import('@/pages/dashboards/healthy-lab.vue'),
+    path: '/dashboards/lab',
+    name: 'dashboards-lab',
+    component: () => import('@/pages/dashboards/lab.vue'),
   },
   {
     path: '/dashboards/logistics',

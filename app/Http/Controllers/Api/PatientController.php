@@ -17,7 +17,7 @@ class PatientController extends Controller
      */
     public function index(Request $request)
     {
-        $query = \App\Queries\PatientSearch::run($request)->with(['district.branch'])->latest();
+        $query = \App\Queries\PatientSearch::run($request)->latest();
 
         // pagination اختياري — إذا أُرسل itemsPerPage نُقسّم، وإلا نرجع الكل (توافق مع الفرونت الحالي)
         if ($request->filled('itemsPerPage')) {
@@ -69,7 +69,7 @@ class PatientController extends Controller
         return response()->json([
             'status'  => true,
             'message' => 'تم تحديث بيانات المريض بنجاح',
-            'data'    => new PatientResource($patient->fresh(['district.branch'])),
+            'data'    => new PatientResource($patient->fresh()),
         ]);
     }
 
@@ -78,10 +78,10 @@ class PatientController extends Controller
      */
     public function show(Request $request, Patient $patient)
     {
-        $loadedPatient = $patient->load(['district.branch', 'chronicDiseases', 'medications', 'allergies']);
+        $loadedPatient = $patient->load(['chronicDiseases', 'medications', 'allergies']);
 
         $ordersQuery = $patient->orders()
-            ->with(['patient', 'branch', 'technician', 'items', 'results', 'statusLogs.changedBy', 'coupon'])
+            ->with(['patient', 'technician', 'items', 'results', 'statusLogs.changedBy', 'coupon'])
             ->latest();
 
         // صفحات الطلبات — لمنع جلب آلاف السجلات للمرضى القدامى
@@ -138,7 +138,7 @@ class PatientController extends Controller
             'message' => $patient->is_active
                 ? 'تم تفعيل حساب المريض بنجاح.'
                 : 'تم إيقاف حساب المريض وطرده من التطبيق فوراً (حذف جميع التوكنات).',
-            'data'    => new PatientResource($patient->fresh(['district.branch'])),
+            'data'    => new PatientResource($patient->fresh()),
         ]);
     }
 
