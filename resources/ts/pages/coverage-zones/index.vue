@@ -226,7 +226,7 @@ onMounted(async () => {
   // Dynamically import leaflet-draw so it runs AFTER window.L is set
   await import('leaflet-draw')
 
-  map = L.map('coverage-map').setView([33.3128, 44.3615], 9) // Baghdad coordinates
+  map = L.map('coverage-map').setView([33.7457, 44.6412], 13) // بعقوبة / ديالى
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'

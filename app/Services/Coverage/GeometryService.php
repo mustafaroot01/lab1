@@ -25,7 +25,12 @@ class GeometryService
             $p1 = $ring[$i];
             $p2 = $ring[$i + 1];
 
-            $dist = $this->distanceToSegment($lat, $lng, (float)$p1[0], (float)$p1[1], (float)$p2[0], (float)$p2[1]);
+            // GeoJSON format: [longitude, latitude] — so [0]=lng, [1]=lat
+            $dist = $this->distanceToSegment(
+                $lat, $lng,
+                (float)$p1[1], (float)$p1[0],  // p1: lat=index1, lng=index0
+                (float)$p2[1], (float)$p2[0]   // p2: lat=index1, lng=index0
+            );
             
             if ($dist < $minDistance) {
                 $minDistance = $dist;
@@ -39,27 +44,33 @@ class GeometryService
      * Shortest distance from a point to a line segment defined by two points.
      * Calculated using equirectangular approximation for performance, converted to meters.
      */
-    private function distanceToSegment(float $px, float $py, float $ax, float $ay, float $bx, float $by): float
+    /**
+     * Signature: distanceToSegment(point_lat, point_lng, seg_a_lat, seg_a_lng, seg_b_lat, seg_b_lng)
+     * Returns distance in meters from point P to line segment A→B.
+     * Uses equirectangular projection for speed (accurate enough for small regions like Iraq).
+     */
+    private function distanceToSegment(float $pLat, float $pLng, float $aLat, float $aLng, float $bLat, float $bLng): float
     {
-        $dx = $bx - $ax;
-        $dy = $by - $ay;
+        $dx = $bLng - $aLng;
+        $dy = $bLat - $aLat;
 
         if ($dx == 0 && $dy == 0) {
-            return $this->haversineDistance($px, $py, $ax, $ay);
+            // Segment is a point
+            return $this->haversineDistance($pLat, $pLng, $aLat, $aLng);
         }
 
-        $t = (($px - $ax) * $dx + ($py - $ay) * $dy) / ($dx * $dx + $dy * $dy);
+        $t = (($pLng - $aLng) * $dx + ($pLat - $aLat) * $dy) / ($dx * $dx + $dy * $dy);
 
         if ($t < 0) {
-            return $this->haversineDistance($px, $py, $ax, $ay);
+            return $this->haversineDistance($pLat, $pLng, $aLat, $aLng);
         } elseif ($t > 1) {
-            return $this->haversineDistance($px, $py, $bx, $by);
+            return $this->haversineDistance($pLat, $pLng, $bLat, $bLng);
         }
 
-        $closestX = $ax + $t * $dx;
-        $closestY = $ay + $t * $dy;
+        $closestLng = $aLng + $t * $dx;
+        $closestLat = $aLat + $t * $dy;
 
-        return $this->haversineDistance($px, $py, $closestX, $closestY);
+        return $this->haversineDistance($pLat, $pLng, $closestLat, $closestLng);
     }
 
     /**

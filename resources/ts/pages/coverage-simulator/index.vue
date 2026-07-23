@@ -22,7 +22,7 @@ const initMap = () => {
     (window as any).L = L
   }
 
-  map = L.map('simulator-map').setView([33.3128, 44.3615], 11) // Baghdad coordinates
+  map = L.map('simulator-map').setView([33.7457, 44.6412], 12) // بعقوبة / ديالى
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map)
