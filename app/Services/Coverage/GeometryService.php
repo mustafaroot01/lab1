@@ -12,14 +12,19 @@ class GeometryService
      */
     public function distanceToPolygonEdge(float $lat, float $lng, array $polygon): float
     {
-        if (empty($polygon) || count($polygon) < 3) {
+        if (empty($polygon)) {
             return PHP_FLOAT_MAX;
         }
 
         $minDistance = PHP_FLOAT_MAX;
-        
+
+        // Extract outer ring: GeoJSON coordinates = [ [[lng,lat],...] ]
         $ring = isset($polygon[0][0]) && is_array($polygon[0][0]) ? $polygon[0] : $polygon;
         $count = count($ring);
+
+        if ($count < 3) {
+            return PHP_FLOAT_MAX;
+        }
 
         for ($i = 0; $i < $count - 1; $i++) {
             $p1 = $ring[$i];
@@ -31,7 +36,7 @@ class GeometryService
                 (float)$p1[1], (float)$p1[0],  // p1: lat=index1, lng=index0
                 (float)$p2[1], (float)$p2[0]   // p2: lat=index1, lng=index0
             );
-            
+
             if ($dist < $minDistance) {
                 $minDistance = $dist;
             }
@@ -41,13 +46,9 @@ class GeometryService
     }
 
     /**
-     * Shortest distance from a point to a line segment defined by two points.
-     * Calculated using equirectangular approximation for performance, converted to meters.
-     */
-    /**
      * Signature: distanceToSegment(point_lat, point_lng, seg_a_lat, seg_a_lng, seg_b_lat, seg_b_lng)
      * Returns distance in meters from point P to line segment A→B.
-     * Uses equirectangular projection for speed (accurate enough for small regions like Iraq).
+     * Uses equirectangular projection for speed (accurate for small regions like Iraq).
      */
     private function distanceToSegment(float $pLat, float $pLng, float $aLat, float $aLng, float $bLat, float $bLng): float
     {

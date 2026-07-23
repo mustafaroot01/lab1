@@ -55,6 +55,7 @@ const snackbarColor = ref('success')
 let map: L.Map
 let drawnItems: L.FeatureGroup
 let drawnLayersMap: Record<number, L.Layer> = {}
+let tempDrawnLayer: L.Layer | null = null // tracks newly drawn but unsaved shape
 
 // Fetch Data
 const fetchZones = async () => {
@@ -124,7 +125,7 @@ const resetForm = () => {
   targetZone.value = null
 }
 
-const openAddDialog = (type: 'POLYGON' | 'RADIUS', geometryData: any) => {
+const openAddDialog = (type: 'POLYGON' | 'RADIUS', geometryData: any, layer: L.Layer) => {
   resetForm()
   form.value.coverage_type = type
   if (type === 'POLYGON') {
@@ -134,6 +135,8 @@ const openAddDialog = (type: 'POLYGON' | 'RADIUS', geometryData: any) => {
     form.value.center_lng = geometryData.lng
     form.value.radius_meters = Math.round(geometryData.radius)
   }
+  // Track the temp layer so we can remove it if user cancels
+  tempDrawnLayer = layer
   dialog.value = true
 }
 
@@ -194,6 +197,7 @@ const saveZone = async () => {
     await $api(url, { method, body: form.value })
     showToast(isEditing.value ? 'تم التعديل بنجاح' : 'تمت الإضافة بنجاح')
     dialog.value = false
+    tempDrawnLayer = null // saved, no need to remove on cancel
     fetchZones()
   } catch (err: any) {
     const errorData = err.response?._data || err.response?.data || err.data;
@@ -204,6 +208,15 @@ const saveZone = async () => {
       showToast(errorData?.message || 'حدث خطأ أثناء الحفظ', 'error')
     }
   }
+}
+
+const cancelDialog = () => {
+  // Remove the unsaved drawn shape from the map
+  if (tempDrawnLayer) {
+    drawnItems.removeLayer(tempDrawnLayer)
+    tempDrawnLayer = null
+  }
+  dialog.value = false
 }
 
 const executeDelete = async () => {
@@ -264,14 +277,16 @@ onMounted(async () => {
     const type = e.layerType
     const layer = e.layer
     
-    // We don't add it to drawnItems yet until they save the form
+    // Add the layer to drawnItems temporarily so it shows on map
+    // If user cancels, cancelDialog() will remove it
+    drawnItems.addLayer(layer)
     
     if (type === 'polygon') {
-      openAddDialog('POLYGON', layer.toGeoJSON().geometry)
+      openAddDialog('POLYGON', layer.toGeoJSON().geometry, layer)
     } else if (type === 'circle') {
       const latlng = layer.getLatLng()
       const radius = layer.getRadius()
-      openAddDialog('RADIUS', { lat: latlng.lat, lng: latlng.lng, radius })
+      openAddDialog('RADIUS', { lat: latlng.lat, lng: latlng.lng, radius }, layer)
     }
   })
   
@@ -379,7 +394,7 @@ onMounted(async () => {
       :form-data="form"
       :form-errors="formErrors"
       @save="saveZone"
-      @cancel="fetchZones"
+      @cancel="cancelDialog"
     />
 
     <!-- Delete Dialog -->
