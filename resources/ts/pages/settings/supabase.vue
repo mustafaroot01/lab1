@@ -6,6 +6,7 @@ const refForm = ref<VForm>()
 const isLoading = ref(false)
 const isTesting = ref(false)
 const testResult = ref<{ status: boolean; message: string } | null>(null)
+const snackbar = ref({ show: false, message: '', color: 'success' })
 
 const settings = ref({
   supabase_anon_key: '',
@@ -40,11 +41,11 @@ const saveSettings = async () => {
     })
     
     if (res.status) {
-      useToast().success(res.message)
+      snackbar.value = { show: true, message: res.message, color: 'success' }
       await fetchSettings()
     }
   } catch (error: any) {
-    useToast().error(error.response?.data?.message || 'حدث خطأ أثناء حفظ الإعدادات')
+    snackbar.value = { show: true, message: error.response?.data?.message || 'حدث خطأ أثناء حفظ الإعدادات', color: 'error' }
   } finally {
     isLoading.value = false
   }
@@ -61,13 +62,13 @@ const testConnection = async () => {
       status: true,
       message: res.message,
     }
-    useToast().success(res.message)
+    snackbar.value = { show: true, message: res.message, color: 'success' }
   } catch (error: any) {
     testResult.value = {
       status: false,
       message: error.response?.data?.message || 'حدث خطأ في الاتصال',
     }
-    useToast().error(testResult.value.message)
+    snackbar.value = { show: true, message: testResult.value.message, color: 'error' }
   } finally {
     isTesting.value = false
   }
@@ -187,5 +188,14 @@ onMounted(() => {
         </VCard>
       </VCol>
     </VRow>
+
+    <VSnackbar
+      v-model="snackbar.show"
+      location="top"
+      :color="snackbar.color"
+      timeout="3000"
+    >
+      {{ snackbar.message }}
+    </VSnackbar>
   </div>
 </template>
