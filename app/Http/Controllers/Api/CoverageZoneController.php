@@ -13,17 +13,11 @@ class CoverageZoneController extends Controller
 {
     public function index()
     {
-        if (DB::getDriverName() === 'sqlite') {
-            $zones = CoverageZone::orderBy('priority', 'desc')->get();
-            $zones->map(function($zone) {
-                $zone->geometry_json = $zone->geometry;
-                return $zone;
-            });
-        } else {
-            $zones = CoverageZone::select('*', DB::raw('ST_AsGeoJSON(geometry) as geometry_json'))
-                ->orderBy('priority', 'desc')
-                ->get();
-        }
+        $zones = CoverageZone::orderBy('priority', 'desc')->get();
+        $zones->map(function($zone) {
+            $zone->geometry_json = $zone->geometry;
+            return $zone;
+        });
             
         return response()->json([
             'status' => true,
@@ -44,29 +38,12 @@ class CoverageZoneController extends Controller
         $data = collect($validated)->except(['geojson', 'center_lat', 'center_lng', 'radius_meters'])->toArray();
         
         DB::transaction(function () use ($validated, $data) {
-            if (DB::getDriverName() === 'sqlite') {
-                if ($validated['coverage_type'] === 'POLYGON') {
-                    $data['geometry'] = json_encode($validated['geojson']);
-                } else {
-                    $data['geometry'] = "POINT({$validated['center_lng']} {$validated['center_lat']})";
-                }
-                CoverageZone::create($data);
+            if ($validated['coverage_type'] === 'POLYGON') {
+                $data['geometry'] = json_encode($validated['geojson']);
             } else {
-                // Insert with dummy point to satisfy NOT NULL constraint safely
-                $data['geometry'] = DB::raw("ST_GeomFromText('POINT(0 0)')");
-                $zone = CoverageZone::create($data);
-
-                // Update with real geometry using safe bindings
-                if ($validated['coverage_type'] === 'POLYGON') {
-                    DB::statement('UPDATE coverage_zones SET geometry = ST_GeomFromGeoJSON(?) WHERE id = ?', [
-                        json_encode($validated['geojson']), $zone->id
-                    ]);
-                } elseif ($validated['coverage_type'] === 'RADIUS') {
-                    DB::statement('UPDATE coverage_zones SET geometry = ST_GeomFromText(?) WHERE id = ?', [
-                        "POINT({$validated['center_lng']} {$validated['center_lat']})", $zone->id
-                    ]);
-                }
+                $data['geometry'] = "POINT({$validated['center_lng']} {$validated['center_lat']})";
             }
+            CoverageZone::create($data);
         });
         
         app(CoverageRepository::class)->refreshCache();
@@ -91,30 +68,12 @@ class CoverageZoneController extends Controller
                 $data['center_lat'] = $validated['center_lat'];
                 $data['center_lng'] = $validated['center_lng'];
             }
-            
-            if (DB::getDriverName() === 'sqlite') {
-                if ($validated['coverage_type'] === 'POLYGON') {
-                    $data['geometry'] = json_encode($validated['geojson']);
-                } else {
-                    $data['geometry'] = "POINT({$validated['center_lng']} {$validated['center_lat']})";
-                }
-                $zone->update($data);
+            if ($validated['coverage_type'] === 'POLYGON') {
+                $data['geometry'] = json_encode($validated['geojson']);
             } else {
-                // Dummy geometry to satisfy Eloquent if it triggers a re-save of geometry
-                $data['geometry'] = DB::raw("ST_GeomFromText('POINT(0 0)')");
-                $zone->update($data);
-
-                // Update with real geometry using safe bindings
-                if ($validated['coverage_type'] === 'POLYGON') {
-                    DB::statement('UPDATE coverage_zones SET geometry = ST_GeomFromGeoJSON(?) WHERE id = ?', [
-                        json_encode($validated['geojson']), $zone->id
-                    ]);
-                } elseif ($validated['coverage_type'] === 'RADIUS') {
-                    DB::statement('UPDATE coverage_zones SET geometry = ST_GeomFromText(?) WHERE id = ?', [
-                        "POINT({$validated['center_lng']} {$validated['center_lat']})", $zone->id
-                    ]);
-                }
+                $data['geometry'] = "POINT({$validated['center_lng']} {$validated['center_lat']})";
             }
+            $zone->update($data);
         });
         
         app(CoverageRepository::class)->refreshCache();
