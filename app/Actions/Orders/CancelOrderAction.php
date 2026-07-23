@@ -23,7 +23,7 @@ class CancelOrderAction
 
         $reason = $cancelReason ?? 'طلب إلغاء من المريض';
 
-        return DB::transaction(function () use ($order, $user, $reason) {
+        $order = DB::transaction(function () use ($order, $user, $reason) {
             $order->update([
                 'status'        => 'cancelled',
                 'cancel_reason' => $reason,
@@ -37,6 +37,7 @@ class CancelOrderAction
                 'notes'              => $reason,
             ]);
 
+            // استرجاع الكوبون إذا كان الطلب يحتوي على كوبون
             if ($order->coupon_id) {
                 Coupon::whereKey($order->coupon_id)->where('used_count', '>', 0)->decrement('used_count');
                 CouponUsage::where('coupon_id', $order->coupon_id)
@@ -47,6 +48,7 @@ class CancelOrderAction
             return $order;
         });
 
+        // إرسال إشعار الإلغاء للمريض (بعد انتهاء الـ transaction بنجاح)
         event(new \App\Events\OrderStatusChanged($order, \App\Enums\NotificationType::CANCELLED));
 
         return $order;
