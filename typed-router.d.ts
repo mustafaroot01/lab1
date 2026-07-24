@@ -158,6 +158,7 @@ declare module 'vue-router/auto-routes' {
     'settings-onesignal': RouteRecordInfo<'settings-onesignal', '/settings/onesignal', Record<never, never>, Record<never, never>>,
     'settings-otp': RouteRecordInfo<'settings-otp', '/settings/otp', Record<never, never>, Record<never, never>>,
     'settings-supabase': RouteRecordInfo<'settings-supabase', '/settings/supabase', Record<never, never>, Record<never, never>>,
+    'settings-working-hours': RouteRecordInfo<'settings-working-hours', '/settings/working-hours', Record<never, never>, Record<never, never>>,
     'tables-data-table': RouteRecordInfo<'tables-data-table', '/tables/data-table', Record<never, never>, Record<never, never>>,
     'tables-simple-table': RouteRecordInfo<'tables-simple-table', '/tables/simple-table', Record<never, never>, Record<never, never>>,
     'technicians': RouteRecordInfo<'technicians', '/technicians', Record<never, never>, Record<never, never>>,

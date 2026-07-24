@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\Api\Mobile;
 
 use App\Http\Controllers\Controller;
-use App\Models\Branch;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class BranchAvailabilityController extends Controller
 {
     /**
-     * جلب الفترات وأوقات العمل المتاحة للحجز لفرع معين وتاريخ معين
-     * GET /api/mobile/branches/{branch}/availability?date=YYYY-MM-DD
+     * جلب الفترات وأوقات العمل المتاحة للحجز (الفرع الرئيسي الوحيد)
+     * GET /api/mobile/availability?date=YYYY-MM-DD
      */
-    public function __invoke(Request $request, Branch $branch)
+    public function __invoke(Request $request)
     {
         $request->validate([
             'date' => 'required|date|after_or_equal:today',
@@ -25,7 +25,9 @@ class BranchAvailabilityController extends Controller
         $date = Carbon::parse($request->query('date'));
         $dayName = strtolower($date->englishDayOfWeek); // مثلا: saturday
 
-        $workingHours = $branch->working_hours ?? [];
+        // قراءة أوقات العمل من إعدادات النظام كـ JSON
+        $workingHoursJson = SystemSetting::getValue('working_hours', '[]');
+        $workingHours = json_decode($workingHoursJson, true) ?? [];
         
         // البحث عن إعدادات اليوم المطلوب
         $dayConfig = collect($workingHours)->firstWhere('key', $dayName);

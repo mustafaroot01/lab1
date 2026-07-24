@@ -135,5 +135,10 @@ export default [
     icon: { icon: 'tabler-database' },
     to: 'settings-supabase',
   },
+  {
+    title: 'أوقات وساعات العمل',
+    icon: { icon: 'tabler-clock' },
+    to: 'settings-working-hours',
+  },
 ]
 

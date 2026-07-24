@@ -143,6 +143,14 @@ Route::prefix('settings/general')->group(function () {
         Route::post('/test', [\App\Http\Controllers\Api\SupabaseSettingController::class, 'testConnection']);
     });
 
+    // Settings
+    Route::get('settings', [\App\Http\Controllers\Api\SettingController::class, 'index']);
+    Route::post('settings', [\App\Http\Controllers\Api\SettingController::class, 'update']);
+    
+    // Working Hours
+    Route::get('working-hours', [\App\Http\Controllers\Api\WorkingHoursController::class, 'index']);
+    Route::put('working-hours', [\App\Http\Controllers\Api\WorkingHoursController::class, 'update']);
+
 // Patients — إدارة المرضى والزبائن المسجلين وسجلاتهم الطبية
 Route::apiResource('patients', PatientController::class);
 Route::patch('patients/{patient}/toggle-status', [PatientController::class, 'toggleStatus']);
@@ -229,6 +237,7 @@ Route::prefix('mobile')->middleware('throttle:60,1')->group(function () {
     Route::post('/cart/preview', [\App\Http\Controllers\Api\Mobile\CartController::class, 'previewCart']);
     Route::post('/coupon/validate', [\App\Http\Controllers\Api\Mobile\CouponController::class, 'validateCoupon']);
     Route::get('/branches/{branch}/availability', \App\Http\Controllers\Api\Mobile\BranchAvailabilityController::class);
+    Route::get('/availability', \App\Http\Controllers\Api\Mobile\BranchAvailabilityController::class);
     // فحص التغطية الجغرافية من تطبيق المريض (قبل السلة)
     Route::post('/coverage/check', [\App\Http\Controllers\Api\Mobile\CoverageCheckController::class, 'check']);
 

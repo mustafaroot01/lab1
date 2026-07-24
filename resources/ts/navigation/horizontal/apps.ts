@@ -45,6 +45,8 @@ export default [
       { title: 'معلومات التواصل', to: 'contact-infos' },
       { title: 'الإعدادات العامّة', to: 'settings-general' },
       { title: 'إعدادات تحقق الواتساب (OTP)', to: 'settings-otp' },
+      { title: 'أوقات وساعات العمل', to: 'settings-working-hours' },
+      { title: 'إعدادات الدردشة (Supabase)', to: 'settings-supabase' },
     ],
   },
 ]
