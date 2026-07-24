@@ -10,7 +10,7 @@ use App\Http\Resources\MedicationResource;
 use App\Models\PatientAllergy;
 use App\Models\PatientChronicDisease;
 use App\Models\PatientMedication;
-use App\Models\User;
+use App\Models\Patient;
 use Illuminate\Http\Request;
 
 class MedicalRecordController extends Controller
@@ -18,7 +18,7 @@ class MedicalRecordController extends Controller
     /**
      * جلب السجل الطبي المجمّع للمريض (الأمراض المزمنة، الأدوية، والحساسية)
      */
-    public function index(Request $request, ?User $patient = null)
+    public function index(Request $request, ?Patient $patient = null)
     {
         $targetUser = $patient ?: $request->user('sanctum');
 
@@ -51,7 +51,7 @@ class MedicalRecordController extends Controller
     /**
      * إضافة عنصر لسجل المريض (مرض مزمن chronic_disease، دواء medication، أو حساسية allergy)
      */
-    public function store(StoreMedicalRecordRequest $request, ?User $patient = null)
+    public function store(StoreMedicalRecordRequest $request, ?Patient $patient = null)
     {
         $targetUser = $patient ?: $request->user('sanctum');
 
@@ -121,7 +121,7 @@ class MedicalRecordController extends Controller
     /**
      * تعديل عنصر في السجل الطبي أو الدوائي
      */
-    public function update(StoreMedicalRecordRequest $request, string $type, int $id, ?User $patient = null)
+    public function update(StoreMedicalRecordRequest $request, string $type, int $id, ?Patient $patient = null)
     {
         $targetUser = $patient ?: $request->user('sanctum');
 
@@ -136,7 +136,7 @@ class MedicalRecordController extends Controller
         $validated = $request->validated();
 
         if ($type === 'chronic_disease') {
-            $record = PatientChronicDisease::where('id', $id)->where('user_id', $targetUser->id)->first();
+            $record = PatientChronicDisease::where('id', $id)->where('patient_id', $targetUser->id)->first();
             if (!$record) {
                 return response()->json(['status' => false, 'message' => 'السجل غير موجود'], 404);
             }
@@ -156,7 +156,7 @@ class MedicalRecordController extends Controller
         }
 
         if ($type === 'medication') {
-            $record = PatientMedication::where('id', $id)->where('user_id', $targetUser->id)->first();
+            $record = PatientMedication::where('id', $id)->where('patient_id', $targetUser->id)->first();
             if (!$record) {
                 return response()->json(['status' => false, 'message' => 'السجل غير موجود'], 404);
             }
@@ -177,7 +177,7 @@ class MedicalRecordController extends Controller
         }
 
         if ($type === 'allergy') {
-            $record = PatientAllergy::where('id', $id)->where('user_id', $targetUser->id)->first();
+            $record = PatientAllergy::where('id', $id)->where('patient_id', $targetUser->id)->first();
             if (!$record) {
                 return response()->json(['status' => false, 'message' => 'السجل غير موجود'], 404);
             }
@@ -205,7 +205,7 @@ class MedicalRecordController extends Controller
     /**
      * حذف عنصر من السجل الطبي للدواء أو المرض أو الحساسية
      */
-    public function destroy(Request $request, string $type, int $id, ?User $patient = null)
+    public function destroy(Request $request, string $type, int $id, ?Patient $patient = null)
     {
         $targetUser = $patient ?: $request->user('sanctum');
 
@@ -220,7 +220,7 @@ class MedicalRecordController extends Controller
 
         if ($query) {
             if ($targetUser) {
-                $query->where('user_id', $targetUser->id);
+                $query->where('patient_id', $targetUser->id);
             }
             $query->delete();
         }

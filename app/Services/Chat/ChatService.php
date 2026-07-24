@@ -206,8 +206,7 @@ class ChatService
                 'include_external_user_ids' => [$patientId]
             ]);
         } catch (\Exception $e) {
-            // Log error
-        }
+            // Log error silently — notifications are non-critical
         }
     }
 }

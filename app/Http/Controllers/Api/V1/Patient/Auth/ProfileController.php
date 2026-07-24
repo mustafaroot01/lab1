@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1\Patient\Auth;
 
-use App\Actions\Chat\CreateConversationForUserAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\CompleteProfileRequest;
 use App\Http\Requests\Auth\UpdatePatientProfileRequest;
 use App\Http\Resources\UserResource;
-use App\Models\Area;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -32,14 +30,14 @@ class ProfileController extends Controller
 
         return response()->json([
             'status' => true,
-            'user'   => new UserResource($user->load(['district.branch'])),
+            'user'   => new UserResource($user),
         ]);
     }
 
     /**
      * استكمال الملف الشخصي لأول مرة
      */
-    public function completeProfile(CompleteProfileRequest $request, CreateConversationForUserAction $createConversation)
+    public function completeProfile(CompleteProfileRequest $request)
     {
         /** @var Patient $user */
         $user = $request->user();
@@ -51,14 +49,11 @@ class ProfileController extends Controller
             'is_profile_completed' => true,
         ]);
 
-        // إنشاء محادثة الدعم فوراً
-        $createConversation->execute($user);
-
         return response()->json([
             'status'    => true,
             'message'   => 'تم إكمال الملف الشخصي بنجاح، مرحباً بك في التطبيق',
             'next_step' => 'home',
-            'user'      => new UserResource($user->fresh(['district.branch'])),
+            'user'      => new UserResource($user->fresh()),
         ]);
     }
 
@@ -82,7 +77,7 @@ class ProfileController extends Controller
         return response()->json([
             'status'  => true,
             'message' => 'تم تحديث بيانات الحساب بنجاح ✓',
-            'user'    => new UserResource($user->fresh(['district.branch'])),
+            'user'    => new UserResource($user->fresh()),
         ]);
     }
 

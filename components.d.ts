@@ -34,6 +34,7 @@ declare module 'vue' {
     ConfirmDialog: typeof import('./resources/ts/components/dialogs/ConfirmDialog.vue')['default']
     CoverageAlgorithmTimeline: typeof import('./resources/ts/components/coverage/CoverageAlgorithmTimeline.vue')['default']
     CoverageZoneDialog: typeof import('./resources/ts/components/coverage/CoverageZoneDialog.vue')['default']
+    CoverageZoneDrawer: typeof import('./resources/ts/components/coverage/CoverageZoneDrawer.vue')['default']
     CreateAppDialog: typeof import('./resources/ts/components/dialogs/CreateAppDialog.vue')['default']
     CustomCheckboxes: typeof import('./resources/ts/@core/components/app-form-elements/CustomCheckboxes.vue')['default']
     CustomCheckboxesWithIcon: typeof import('./resources/ts/@core/components/app-form-elements/CustomCheckboxesWithIcon.vue')['default']

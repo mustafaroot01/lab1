@@ -10,14 +10,17 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:modelValue', 'save', 'cancel'])
 
-const dialog = ref(props.modelValue)
+const drawer = ref(props.modelValue)
 
 watch(() => props.modelValue, (newVal) => {
-  dialog.value = newVal
+  drawer.value = newVal
 })
 
-watch(dialog, (newVal) => {
+watch(drawer, (newVal) => {
   emit('update:modelValue', newVal)
+  if (!newVal) {
+    emit('cancel')
+  }
 })
 
 const handleSave = () => {
@@ -25,8 +28,7 @@ const handleSave = () => {
 }
 
 const handleCancel = () => {
-  emit('cancel')
-  dialog.value = false
+  drawer.value = false
 }
 
 // Helpers for history
@@ -37,21 +39,40 @@ const formatDate = (dateString: string) => {
 </script>
 
 <template>
-  <VDialog v-model="dialog" max-width="700" persistent>
-    <VCard :title="isEditing ? 'تعديل منطقة التغطية' : 'حفظ منطقة تغطية جديدة'">
-      
-      <!-- Revision History Alert -->
-      <VCardText v-if="isEditing && formData.updated_at" class="pt-0 pb-2">
-        <VAlert type="info" variant="tonal" density="compact">
-          <div class="d-flex justify-space-between align-center text-caption">
-            <span><strong>آخر تحديث:</strong> {{ formatDate(formData.updated_at) }}</span>
-            <span><strong>تم الإنشاء:</strong> {{ formatDate(formData.created_at) }}</span>
-            <VChip size="x-small" color="primary">النسخة الحالية</VChip>
-          </div>
-        </VAlert>
-      </VCardText>
+  <VNavigationDrawer
+    v-model="drawer"
+    location="end"
+    temporary
+    width="400"
+    class="scrollable-content"
+  >
+    <!-- Header -->
+    <div class="d-flex align-center pa-6 pb-4">
+      <h6 class="text-h6 font-weight-medium mb-0">
+        {{ isEditing ? 'تعديل منطقة التغطية' : 'إضافة منطقة جديدة' }}
+      </h6>
+      <VSpacer />
+      <VBtn
+        icon="tabler-x"
+        variant="text"
+        color="default"
+        size="small"
+        @click="handleCancel"
+      />
+    </div>
 
-      <VCardText class="pt-2">
+    <VDivider />
+
+    <div class="pa-6">
+      <!-- Revision History Alert -->
+      <VAlert v-if="isEditing && formData.updated_at" type="info" variant="tonal" density="compact" class="mb-6">
+        <div class="d-flex flex-column text-caption gap-1">
+          <span><strong>تم الإنشاء:</strong> {{ formatDate(formData.created_at) }}</span>
+          <span><strong>آخر تحديث:</strong> {{ formatDate(formData.updated_at) }}</span>
+        </div>
+      </VAlert>
+
+      <VForm @submit.prevent="handleSave">
         <VRow>
           <VCol cols="12">
             <AppTextField
@@ -62,7 +83,7 @@ const formatDate = (dateString: string) => {
             />
           </VCol>
           
-          <VCol cols="12" md="4">
+          <VCol cols="12">
             <AppTextField
               v-model.number="formData.service_fee"
               label="رسوم الزيارة (د.ع) *"
@@ -71,7 +92,7 @@ const formatDate = (dateString: string) => {
             />
           </VCol>
           
-          <VCol cols="12" md="4">
+          <VCol cols="12">
             <AppTextField
               v-model.number="formData.free_visit_threshold"
               label="حد الزيارة المجانية (د.ع)"
@@ -82,7 +103,7 @@ const formatDate = (dateString: string) => {
             />
           </VCol>
           
-          <VCol cols="12" md="4">
+          <VCol cols="12">
             <AppTextField
               v-model.number="formData.priority"
               label="الأولوية (رقم أعلى = أولوية أكبر)"
@@ -93,7 +114,7 @@ const formatDate = (dateString: string) => {
             />
           </VCol>
 
-          <VCol cols="12" md="6">
+          <VCol cols="12">
             <AppTextField
               v-model.number="formData.grace_distance"
               label="مسافة السماح (بالمتر)"
@@ -104,7 +125,7 @@ const formatDate = (dateString: string) => {
             />
           </VCol>
 
-          <VCol cols="12" md="6">
+          <VCol cols="12">
             <AppSelect
               v-model="formData.status"
               :items="[
@@ -117,12 +138,16 @@ const formatDate = (dateString: string) => {
             />
           </VCol>
         </VRow>
-      </VCardText>
-      
-      <VCardActions class="pa-4 justify-end">
-        <VBtn color="secondary" variant="tonal" @click="handleCancel">إلغاء</VBtn>
-        <VBtn color="primary" @click="handleSave">حفظ المنطقة</VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+
+        <div class="d-flex justify-end gap-3 mt-8">
+          <VBtn color="secondary" variant="tonal" @click="handleCancel">
+            إلغاء
+          </VBtn>
+          <VBtn color="primary" type="submit">
+            حفظ المنطقة
+          </VBtn>
+        </div>
+      </VForm>
+    </div>
+  </VNavigationDrawer>
 </template>

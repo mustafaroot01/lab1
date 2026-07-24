@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-draw/dist/leaflet.draw.css'
-import CoverageZoneDialog from '@/components/coverage/CoverageZoneDialog.vue'
+import CoverageZoneDrawer from '@/components/coverage/CoverageZoneDrawer.vue'
 
 // Types
 interface CoverageZone {
@@ -28,6 +28,7 @@ const dialog = ref(false)
 const deleteDialog = ref(false)
 const isEditing = ref(false)
 const targetZone = ref<CoverageZone | null>(null)
+const hoveredZoneId = ref<number | null>(null)
 
 const form = ref({
   name: '',
@@ -57,6 +58,12 @@ let drawnItems: L.FeatureGroup
 let drawnLayersMap: Record<number, L.Layer> = {}
 let tempDrawnLayer: L.Layer | null = null // tracks newly drawn but unsaved shape
 
+// Layer Groups for Status Toggle
+let activeGroup: L.LayerGroup
+let inactiveGroup: L.LayerGroup
+let maintenanceGroup: L.LayerGroup
+let layerControl: L.Control.Layers | null = null
+
 // Fetch Data
 const fetchZones = async () => {
   loading.value = true
@@ -66,6 +73,9 @@ const fetchZones = async () => {
     
     // Clear existing layers
     drawnItems.clearLayers()
+    if (activeGroup) activeGroup.clearLayers()
+    if (inactiveGroup) inactiveGroup.clearLayers()
+    if (maintenanceGroup) maintenanceGroup.clearLayers()
     drawnLayersMap = {}
     
     // Add zones to map
@@ -82,10 +92,27 @@ const fetchZones = async () => {
         // Different colors based on status
         const color = zone.status === 'ACTIVE' ? '#28c76f' : (zone.status === 'MAINTENANCE' ? '#ff9f43' : '#ea5455')
         if (layer instanceof L.Path) {
-          layer.setStyle({ color, fillColor: color, fillOpacity: 0.2 })
+          layer.setStyle({ color, fillColor: color, fillOpacity: 0.2, weight: 2 })
+          
+          // Hover events on map layer
+          layer.on('mouseover', () => hoveredZoneId.value = zone.id)
+          layer.on('mouseout', () => hoveredZoneId.value = null)
         }
         
-        layer.bindPopup(`<b>${zone.name}</b><br>التكلفة: ${zone.service_fee} د.ع<br>الأولوية: ${zone.priority}`)
+        const tooltipContent = `
+          <div class="text-body-2 font-weight-bold mb-1">${zone.name}</div>
+          <div class="text-caption">
+            التكلفة: ${zone.service_fee} د.ع<br>
+            الأولوية: ${zone.priority}
+          </div>
+        `
+        layer.bindTooltip(tooltipContent, { sticky: true, className: 'zone-tooltip' })
+        
+        // Add to appropriate status group and general drawnItems
+        if (zone.status === 'ACTIVE') activeGroup.addLayer(layer)
+        else if (zone.status === 'INACTIVE') inactiveGroup.addLayer(layer)
+        else if (zone.status === 'MAINTENANCE') maintenanceGroup.addLayer(layer)
+        
         drawnItems.addLayer(layer)
         drawnLayersMap[zone.id] = layer
       }
@@ -96,6 +123,23 @@ const fetchZones = async () => {
     loading.value = false
   }
 }
+
+// Watch hover state to highlight map
+watch(hoveredZoneId, (newId, oldId) => {
+  if (oldId && drawnLayersMap[oldId]) {
+    const layer = drawnLayersMap[oldId]
+    if (layer instanceof L.Path) {
+      layer.setStyle({ weight: 2, fillOpacity: 0.2 })
+    }
+  }
+  if (newId && drawnLayersMap[newId]) {
+    const layer = drawnLayersMap[newId]
+    if (layer instanceof L.Path) {
+      layer.setStyle({ weight: 4, fillOpacity: 0.5 })
+      layer.bringToFront()
+    }
+  }
+})
 
 const showToast = (text: string, color = 'success') => {
   snackbarText.value = text
@@ -245,8 +289,21 @@ onMounted(async () => {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map)
 
+  // Initialize Layer Groups
+  activeGroup = L.layerGroup().addTo(map)
+  inactiveGroup = L.layerGroup().addTo(map)
+  maintenanceGroup = L.layerGroup().addTo(map)
+  
   drawnItems = new L.FeatureGroup()
-  map.addLayer(drawnItems)
+  
+  // Setup Layer Control
+  const overlayMaps = {
+    '<span style="color: #28c76f; font-weight: bold;">المناطق الفعالة</span>': activeGroup,
+    '<span style="color: #ea5455; font-weight: bold;">المناطق المتوقفة</span>': inactiveGroup,
+    '<span style="color: #ff9f43; font-weight: bold;">مناطق الصيانة</span>': maintenanceGroup
+  }
+  
+  layerControl = L.control.layers(undefined, overlayMaps, { collapsed: false }).addTo(map)
 
   const drawControl = new L.Control.Draw({
     edit: {
@@ -358,6 +415,13 @@ onMounted(async () => {
         :items="zones"
         :loading="loading"
         hover
+        :row-props="(data: any) => {
+          return {
+            onMouseenter: () => hoveredZoneId = data.item.id,
+            onMouseleave: () => hoveredZoneId = null,
+            class: hoveredZoneId === data.item.id ? 'bg-primary-lighten-4' : ''
+          }
+        }"
       >
         <template #item.coverage_type="{ item }">
           <VChip size="small" :color="item.coverage_type === 'POLYGON' ? 'primary' : 'info'">
@@ -387,8 +451,8 @@ onMounted(async () => {
       </VDataTable>
     </VCard>
 
-    <!-- Add/Edit Dialog -->
-    <CoverageZoneDialog
+    <!-- Add/Edit Drawer -->
+    <CoverageZoneDrawer
       v-model="dialog"
       :is-editing="isEditing"
       :form-data="form"

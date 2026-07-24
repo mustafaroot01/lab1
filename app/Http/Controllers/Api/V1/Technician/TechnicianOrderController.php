@@ -105,7 +105,7 @@ class TechnicianOrderController extends Controller
             return response()->json([
                 'status'  => true,
                 'message' => 'حالة الطلب الحالية هي بالفعل نفس الحالة المحددة',
-                'order'   => new OrderResource($order->load(['patient.district', 'branch', 'technician', 'items'])),
+                'order'   => new OrderResource($order->load(['patient', 'branch', 'technician', 'items'])),
             ]);
         }
 
@@ -135,7 +135,7 @@ class TechnicianOrderController extends Controller
 
         // تحميل العلاقات لمنع Lazy Loading Exceptions أثناء إرجاع الـ Resource
         $order->load([
-            'patient:id,name,phone,district_id',
+            'patient:id,name,phone',
             'branch:id,name_ar',
             'technician:id,name,phone',
             'items',

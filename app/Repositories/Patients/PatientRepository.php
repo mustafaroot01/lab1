@@ -29,9 +29,7 @@ class PatientRepository
      */
     public function getOrdersCount(int $patientId): int
     {
-        return Order::where('patient_id', $patientId)
-            ->orWhere('user_id', $patientId) // Depending on your auth structure
-            ->count();
+        return Order::where('patient_id', $patientId)->count();
     }
 
     /**
@@ -40,15 +38,13 @@ class PatientRepository
     public function getChatHistoryStats(int $patientId): array
     {
         $orders = Order::where('patient_id', $patientId)
-            ->orWhere('user_id', $patientId)
             ->latest()
             ->take(5)
             ->get(['id', 'status', 'total', 'created_at']);
 
-        $totalSpent = Order::where(function($q) use ($patientId) {
-            $q->where('patient_id', $patientId)
-              ->orWhere('user_id', $patientId);
-        })->where('status', 'completed')->sum('total');
+        $totalSpent = Order::where('patient_id', $patientId)
+            ->where('status', 'completed')
+            ->sum('total');
 
         return [
             'orders' => $orders->toArray(),

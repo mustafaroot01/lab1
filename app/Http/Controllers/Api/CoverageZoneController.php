@@ -39,12 +39,12 @@ class CoverageZoneController extends Controller
         
         DB::transaction(function () use ($validated, $data) {
             if ($validated['coverage_type'] === 'POLYGON') {
-                // Pass as array — the model cast 'json' will encode it automatically
-                // Passing json_encode() here causes double-encoding which breaks bounding box calculation
+                $data['radius_meters'] = null;
                 $data['geometry'] = is_string($validated['geojson'])
                     ? json_decode($validated['geojson'], true)
                     : $validated['geojson'];
             } else {
+                $data['radius_meters'] = $validated['radius_meters'] ?? null;
                 $data['geometry'] = "POINT({$validated['center_lng']} {$validated['center_lat']})";
             }
             CoverageZone::create($data);
@@ -65,19 +65,11 @@ class CoverageZoneController extends Controller
         DB::transaction(function () use ($validated, $data, $zone) {
             if ($validated['coverage_type'] === 'POLYGON') {
                 $data['radius_meters'] = null;
-                $data['center_lat'] = null;
-                $data['center_lng'] = null;
-            } elseif ($validated['coverage_type'] === 'RADIUS') {
-                $data['radius_meters'] = $validated['radius_meters'];
-                $data['center_lat'] = $validated['center_lat'];
-                $data['center_lng'] = $validated['center_lng'];
-            }
-            if ($validated['coverage_type'] === 'POLYGON') {
-                // Pass as array — the model cast 'json' will encode it automatically
                 $data['geometry'] = is_string($validated['geojson'])
                     ? json_decode($validated['geojson'], true)
                     : $validated['geojson'];
             } else {
+                $data['radius_meters'] = $validated['radius_meters'] ?? null;
                 $data['geometry'] = "POINT({$validated['center_lng']} {$validated['center_lat']})";
             }
             $zone->update($data);

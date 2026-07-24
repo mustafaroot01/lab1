@@ -148,8 +148,8 @@ Route::prefix('settings/general')->group(function () {
     Route::post('settings', [\App\Http\Controllers\Api\SettingController::class, 'update']);
     
     // Working Hours
-    Route::get('working-hours', [\App\Http\Controllers\Api\WorkingHoursController::class, 'index']);
-    Route::put('working-hours', [\App\Http\Controllers\Api\WorkingHoursController::class, 'update']);
+    Route::get('settings/working-hours', [\App\Http\Controllers\Api\WorkingHoursController::class, 'index']);
+    Route::put('settings/working-hours', [\App\Http\Controllers\Api\WorkingHoursController::class, 'update']);
 
 // Patients — إدارة المرضى والزبائن المسجلين وسجلاتهم الطبية
 Route::apiResource('patients', PatientController::class);
