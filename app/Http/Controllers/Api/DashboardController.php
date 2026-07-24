@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Branch;
 use App\Models\Chat\Conversation;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -93,7 +92,6 @@ class DashboardController extends Controller
         // ── 2. الطلبات الحرجة والمستعجلة (Urgent Orders) ──
         $urgentOrders = Order::with([
             'patient:id,name,phone',
-            'branch:id,name_ar',
             'technician:id,name,phone',
         ])
             ->whereIn('status', ['awaiting_technician', 'pending', 'sample_collected', 'in_progress'])
@@ -112,7 +110,7 @@ class DashboardController extends Controller
                 'status_color'   => $order->status_color,
                 'patient_name'   => $order->patient?->name ?? 'غير محدد',
                 'patient_phone'  => $order->patient?->phone ?? '—',
-                'branch_name'    => $order->branch?->name_ar ?? '—',
+                'branch_name'    => 'الفرع الرئيسي',
                 'technician'     => $order->technician ? [
                     'id'    => $order->technician->id,
                     'name'  => $order->technician->name,
@@ -164,21 +162,16 @@ class DashboardController extends Controller
                 'revenue' => round((float) $item->revenue, 0),
             ]);
 
-        // توزيع الطلبات على الفروع
-        $branchDistribution = Branch::withCount([
-            'orders as total_orders',
-            'orders as completed_orders' => fn ($q) => $q->where('status', 'completed'),
-        ])
-            ->withSum(['orders as revenue' => fn ($q) => $q->where('status', 'completed')], 'total')
-            ->orderByDesc('total_orders')
-            ->get()
-            ->map(fn ($b) => [
-                'id'               => $b->id,
-                'name'             => $b->name_ar,
-                'total_orders'     => (int) $b->total_orders,
-                'completed_orders' => (int) $b->completed_orders,
-                'revenue'          => round((float) ($b->revenue ?? 0), 0),
-            ]);
+        // توزيع الطلبات على الفروع (تم إلغاء الفروع - سيتم إرجاع الفرع الرئيسي فقط أو مصفوفة فارغة)
+        $branchDistribution = collect([
+            [
+                'id'               => 1,
+                'name'             => 'الفرع الرئيسي',
+                'total_orders'     => Order::count(),
+                'completed_orders' => Order::where('status', 'completed')->count(),
+                'revenue'          => round((float) Order::where('status', 'completed')->sum('total'), 0),
+            ]
+        ]);
 
         // ── 4. أكفأ الفنيين (Top Technicians) ──
         $topTechnicians = Technician::where('status', 'active')
