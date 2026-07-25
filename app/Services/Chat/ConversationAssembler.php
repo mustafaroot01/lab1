@@ -35,7 +35,12 @@ class ConversationAssembler
         return [
             'id' => $conversationData['id'],
             'status' => strtolower($conversationData['status'] ?? 'open'),
-            'patient' => $participantData,
+            'patient' => $participantData ?? [
+                'id' => 0,
+                'name' => 'مريض غير معروف',
+                'phone' => '-',
+                'orders_count' => 0
+            ],
             'is_assigned' => $conversationData['is_assigned'] ?? false,
             'assigned_to' => null,
             'created_at' => $conversationData['created_at'] ?? null,
@@ -68,7 +73,12 @@ class ConversationAssembler
             return [
                 'id' => $conv['id'],
                 'status' => strtolower($conv['status'] ?? 'open'),
-                'patient' => $patientData,
+                'patient' => $patientData ?? [
+                    'id' => 0,
+                    'name' => 'مريض غير معروف',
+                    'phone' => '-',
+                    'orders_count' => 0
+                ],
                 'is_assigned' => $conv['is_assigned'] ?? false,
                 'assigned_to' => null, // Can map later
                 'created_at' => $conv['created_at'] ?? null,
@@ -100,7 +110,12 @@ class ConversationAssembler
             'conversation' => [
                 'id' => $conversationData['id'],
                 'status' => strtolower($conversationData['status'] ?? 'open'),
-                'patient' => $participantData,
+                'patient' => $participantData ?? [
+                    'id' => 0,
+                    'name' => 'مريض غير معروف',
+                    'phone' => '-',
+                    'orders_count' => 0
+                ],
                 'is_assigned' => $conversationData['is_assigned'] ?? false,
                 'assigned_to' => null,
                 'created_at' => $conversationData['created_at'] ?? null,
