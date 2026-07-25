@@ -61,7 +61,7 @@ class ChatController extends Controller
             return response()->json(['status' => false, 'message' => 'المحادثة غير موجودة'], 404);
         }
 
-        return response()->json(array_merge(['status' => true], $conversationView->toArray()));
+        return response()->json(array_merge(['status' => true], $conversationView));
     }
 
     /**
