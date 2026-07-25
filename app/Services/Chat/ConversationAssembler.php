@@ -123,24 +123,30 @@ class ConversationAssembler
                 'last_message_at' => $conversationData['last_message_at'] ?? null,
                 'unread_count' => 0,
             ],
-            'messages' => array_map(function ($msg) use ($participantData) {
-                return [
-                    'id' => $msg['id'],
-                    'conversation_id' => $msg['conversation_id'],
-                    'sender_id' => $msg['sender_id'],
-                    'is_admin' => $msg['sender_type'] === 'Admin',
-                    'is_system' => $msg['message_type'] === 'SYSTEM',
-                    'sender_name' => $msg['sender_type'] === 'Admin' ? 'الإدارة' : ($participantData['name'] ?? 'المريض'),
-                    'body' => $msg['text'],
-                    'attachment' => $msg['attachment_url'] ? [
-                        'url' => $msg['attachment_url'],
-                        'type' => 'image',
-                        'name' => 'attachment',
-                    ] : null,
-                    'created_at' => $msg['created_at'],
-                ];
-            }, $messages),
+            'messages' => $messages,
             'patient_history' => $historyStats
+        ];
+    }
+
+    /**
+     * Map a single message to the Vue frontend format
+     */
+    public function assembleMessage(array $msg, ?array $participantData = null)
+    {
+        return [
+            'id' => $msg['id'],
+            'conversation_id' => $msg['conversation_id'],
+            'sender_id' => $msg['sender_id'],
+            'is_admin' => $msg['sender_type'] === 'Admin',
+            'is_system' => $msg['message_type'] === 'SYSTEM',
+            'sender_name' => $msg['sender_type'] === 'Admin' ? 'الإدارة' : ($participantData['name'] ?? 'المريض'),
+            'body' => $msg['text'],
+            'attachment' => !empty($msg['attachment_url']) ? [
+                'url' => $msg['attachment_url'],
+                'type' => 'image',
+                'name' => 'attachment',
+            ] : null,
+            'created_at' => $msg['created_at'],
         ];
     }
 }

@@ -93,9 +93,12 @@ class ChatService
     /**
      * Fetch messages
      */
-    public function getMessages(string $conversationId, ?string $beforeTimestamp = null): array
+    public function getMessages(string $conversationId, ?string $beforeTimestamp = null)
     {
-        return $this->chatRepository->getMessages($conversationId, $beforeTimestamp);
+        $messages = $this->chatRepository->getMessages($conversationId, 20, $beforeTimestamp);
+        return array_map(function ($msg) {
+            return $this->assembler->assembleMessage($msg);
+        }, $messages);
     }
 
     /**
@@ -117,7 +120,7 @@ class ChatService
         $this->chatRepository->updateConversationLastMessage($conversationId, $text, $senderId);
         $this->sendNotification($conversationId, $senderType, $text);
 
-        return $message;
+        return $this->assembler->assembleMessage($message);
     }
 
     /**
@@ -138,9 +141,7 @@ class ChatService
                     'size' => $file->getSize()
                 ];
             }
-        } catch (\Exception $e) {
-            // Ignore
-        }
+        } catch (\Exception $e) {}
 
         $payload = [
             'client_message_id' => $clientMessageId,
@@ -148,17 +149,17 @@ class ChatService
             'sender_type' => $senderType,
             'sender_id' => $senderId,
             'message_type' => 'IMAGE',
-            'text' => '📷 صورة',
+            'text' => 'صورة مرفقة',
             'attachment_url' => $url,
-            'metadata' => $metadata,
+            'attachment_metadata' => $metadata,
             'status' => 'SENT',
         ];
 
         $message = $this->chatRepository->createMessage($payload);
-        $this->chatRepository->updateConversationLastMessage($conversationId, '📷 صورة', $senderId);
-        $this->sendNotification($conversationId, $senderType, '📷 صورة');
+        $this->chatRepository->updateConversationLastMessage($conversationId, 'صورة مرفقة', $senderId);
+        $this->sendNotification($conversationId, $senderType, 'صورة مرفقة');
 
-        return $message;
+        return $this->assembler->assembleMessage($message);
     }
 
     /**
