@@ -239,6 +239,7 @@ Route::prefix('mobile')->middleware('throttle:60,1')->group(function () {
     Route::get('/branches/{branch}/availability', \App\Http\Controllers\Api\Mobile\BranchAvailabilityController::class);
     Route::get('/availability', \App\Http\Controllers\Api\Mobile\BranchAvailabilityController::class);
     // فحص التغطية الجغرافية من تطبيق المريض (قبل السلة)
+    Route::get('/coverage-zones', [\App\Http\Controllers\Api\Mobile\CoverageZoneController::class, 'index']);
     Route::post('/coverage/check', [\App\Http\Controllers\Api\Mobile\CoverageCheckController::class, 'check']);
 
     // يتطلب تسجيل دخول
