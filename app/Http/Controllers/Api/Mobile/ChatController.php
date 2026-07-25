@@ -38,7 +38,7 @@ class ChatController extends Controller
         
         // البحث عن محادثة مفتوحة
         $activeConversation = collect($conversations)->first(function ($conv) {
-            return ($conv['conversation']['status'] ?? '') === 'OPEN';
+            return strtolower($conv['status'] ?? '') === 'open';
         });
 
         if ($activeConversation) {
@@ -69,7 +69,7 @@ class ChatController extends Controller
     {
         $conversations = $this->chatService->getUserConversations($patientId, 'Patient');
         $exists = collect($conversations)->contains(function ($conv) use ($conversationId) {
-            return ($conv['conversation']['id'] ?? '') === $conversationId;
+            return ($conv['id'] ?? '') === $conversationId;
         });
 
         if (!$exists) {

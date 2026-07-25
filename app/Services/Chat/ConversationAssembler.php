@@ -17,12 +17,8 @@ class ConversationAssembler
     /**
      * Assemble a single conversation with its participant (Patient) data
      */
-    public function assembleConversation(array $conversationData): ConversationView
+    public function assembleConversation(array $conversationData)
     {
-        // Supabase 'conversations' might not have a direct patient_id, 
-        // we might need to rely on the participant logic if the schema splits them.
-        // But assuming the schema simplifies this or we pass the participant explicitly:
-        
         $participantData = null;
         if (!empty($conversationData['patient_id'])) {
             $patient = $this->patientRepository->findById($conversationData['patient_id']);
@@ -36,10 +32,17 @@ class ConversationAssembler
             }
         }
 
-        return new ConversationView(
-            conversation: $conversationData,
-            participant: $participantData
-        );
+        return [
+            'id' => $conversationData['id'],
+            'status' => strtolower($conversationData['status'] ?? 'open'),
+            'patient' => $participantData,
+            'is_assigned' => $conversationData['is_assigned'] ?? false,
+            'assigned_to' => null,
+            'created_at' => $conversationData['created_at'] ?? null,
+            'last_message_preview' => $conversationData['last_message'] ?? null,
+            'last_message_at' => $conversationData['last_message_at'] ?? null,
+            'unread_count' => 0,
+        ];
     }
 
     /**
@@ -51,27 +54,35 @@ class ConversationAssembler
         $patients = $this->patientRepository->findMany($patientIds)->keyBy('id');
 
         return array_map(function ($conv) use ($patients) {
-            $participantData = null;
+            $patientData = null;
             if (!empty($conv['patient_id']) && $patients->has($conv['patient_id'])) {
                 $patient = $patients->get($conv['patient_id']);
-                $participantData = [
+                $patientData = [
                     'id' => $patient->id,
                     'name' => $patient->name,
                     'phone' => $patient->phone,
+                    'orders_count' => $this->patientRepository->getOrdersCount($patient->id)
                 ];
             }
 
-            return (new ConversationView(
-                conversation: $conv,
-                participant: $participantData
-            ))->toArray();
+            return [
+                'id' => $conv['id'],
+                'status' => strtolower($conv['status'] ?? 'open'),
+                'patient' => $patientData,
+                'is_assigned' => $conv['is_assigned'] ?? false,
+                'assigned_to' => null, // Can map later
+                'created_at' => $conv['created_at'] ?? null,
+                'last_message_preview' => $conv['last_message'] ?? null,
+                'last_message_at' => $conv['last_message_at'] ?? null,
+                'unread_count' => 0,
+            ];
         }, $conversations);
     }
 
     /**
      * Assemble full view (chat open)
      */
-    public function assembleFullView(array $conversationData, array $messages, array $historyStats): ConversationView
+    public function assembleFullView(array $conversationData, array $messages, array $historyStats)
     {
         $participantData = null;
         if (!empty($conversationData['patient_id'])) {
@@ -85,11 +96,36 @@ class ConversationAssembler
             }
         }
 
-        return new ConversationView(
-            conversation: $conversationData,
-            participant: $participantData,
-            messages: $messages,
-            history: $historyStats
-        );
+        return [
+            'conversation' => [
+                'id' => $conversationData['id'],
+                'status' => strtolower($conversationData['status'] ?? 'open'),
+                'patient' => $participantData,
+                'is_assigned' => $conversationData['is_assigned'] ?? false,
+                'assigned_to' => null,
+                'created_at' => $conversationData['created_at'] ?? null,
+                'last_message_preview' => $conversationData['last_message'] ?? null,
+                'last_message_at' => $conversationData['last_message_at'] ?? null,
+                'unread_count' => 0,
+            ],
+            'messages' => array_map(function ($msg) use ($participantData) {
+                return [
+                    'id' => $msg['id'],
+                    'conversation_id' => $msg['conversation_id'],
+                    'sender_id' => $msg['sender_id'],
+                    'is_admin' => $msg['sender_type'] === 'Admin',
+                    'is_system' => $msg['message_type'] === 'SYSTEM',
+                    'sender_name' => $msg['sender_type'] === 'Admin' ? 'الإدارة' : ($participantData['name'] ?? 'المريض'),
+                    'body' => $msg['text'],
+                    'attachment' => $msg['attachment_url'] ? [
+                        'url' => $msg['attachment_url'],
+                        'type' => 'image',
+                        'name' => 'attachment',
+                    ] : null,
+                    'created_at' => $msg['created_at'],
+                ];
+            }, $messages),
+            'patient_history' => $historyStats
+        ];
     }
 }

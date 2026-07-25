@@ -33,7 +33,7 @@ class ChatService
     /**
      * Get full conversation details
      */
-    public function openConversation(string $conversationId): ?ConversationView
+    public function openConversation(string $conversationId)
     {
         $conversation = $this->chatRepository->getConversationById($conversationId);
         if (!$conversation) {
