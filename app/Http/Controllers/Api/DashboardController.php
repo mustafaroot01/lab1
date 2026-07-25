@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Chat\Conversation;
+
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusLog;
@@ -50,9 +50,9 @@ class DashboardController extends Controller
             ->distinct('technician_id')
             ->count('technician_id');
 
-        // تذاكر الدعم الفني
-        $activeTicketsCount = Conversation::where('status', 'open')->count();
-        $closedTicketsCount = Conversation::where('status', 'closed')->count();
+        // تذاكر الدعم الفني (تم تحويلها إلى Supabase، يمكن ربط الإحصائيات لاحقاً)
+        $activeTicketsCount = 0;
+        $closedTicketsCount = 0;
 
         // الإيرادات المالية
         $todayRevenue = Order::whereDate('created_at', $today)->where('status', 'completed')->sum('total');
@@ -212,23 +212,7 @@ class DashboardController extends Controller
                 'color'       => $log->to_status === 'completed' ? 'success' : ($log->to_status === 'cancelled' ? 'error' : 'primary'),
             ]);
 
-        $recentConversations = Conversation::with('patient:id,name')
-            ->latest('last_message_at')
-            ->limit(4)
-            ->get()
-            ->map(fn ($conv) => [
-                'id'          => 'conv_' . $conv->id,
-                'type'        => 'ticket',
-                'title'       => 'تذكرة دعم فني #' . $conv->id,
-                'description' => sprintf('المريض (%s): %s', $conv->patient?->name ?? 'مريض', $conv->last_message_preview ?? 'رسالة جديدة'),
-                'time'        => $conv->last_message_at?->diffForHumans() ?? ($conv->created_at?->diffForHumans() ?? ''),
-                'timestamp'   => $conv->last_message_at?->timestamp ?? ($conv->created_at?->timestamp ?? 0),
-                'icon'        => 'tabler-messages',
-                'color'       => $conv->status === 'open' ? 'info' : 'secondary',
-            ]);
-
         $timeline = collect($recentLogs)
-            ->concat($recentConversations)
             ->sortByDesc('timestamp')
             ->take(8)
             ->values();
