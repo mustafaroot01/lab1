@@ -219,9 +219,16 @@ class ChatController extends Controller
      */
     public function getCannedResponses()
     {
+        try {
+            $responses = \App\Models\CannedResponse::where('is_active', true)->get(['id', 'title', 'content']);
+        } catch (\Exception $e) {
+            // Fallback if table doesn't exist yet
+            $responses = [];
+        }
+
         return response()->json([
             'status' => true,
-            'responses' => CannedResponse::where('is_active', true)->get(['id', 'title', 'content'])
+            'responses' => $responses
         ]);
     }
 }
