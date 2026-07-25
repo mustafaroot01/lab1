@@ -79,6 +79,24 @@ class ChatController extends Controller
     }
 
     /**
+     * GET /admin/chat/patient/{patientId}/profile
+     */
+    public function getPatientProfile(string $patientId)
+    {
+        // Simple dummy endpoint to satisfy Vue frontend requirements
+        return response()->json([
+            'status' => true,
+            'profile' => [
+                'id' => $patientId,
+                'name' => 'المريض',
+                'phone' => '-',
+                'about' => 'مريض مسجل بالنظام',
+                'status' => 'online'
+            ]
+        ]);
+    }
+
+    /**
      * GET /admin/chat/{id}/messages
      */
     public function getMessages(string $id, Request $request)

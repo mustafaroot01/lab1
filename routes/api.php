@@ -182,6 +182,7 @@ Route::delete('orders/{order}/results/{result}', [\App\Http\Controllers\Api\Orde
         Route::get('/', [\App\Http\Controllers\Api\ChatController::class, 'getConversations']);
         Route::get('/canned-responses', [\App\Http\Controllers\Api\ChatController::class, 'getCannedResponses']);
         Route::get('/patient/{patientId}/history', [\App\Http\Controllers\Api\ChatController::class, 'getPatientHistory']);
+        Route::get('/patient/{patientId}/profile', [\App\Http\Controllers\Api\ChatController::class, 'getPatientProfile']);
         
         Route::get('/{id}', [\App\Http\Controllers\Api\ChatController::class, 'openConversation']);
         Route::get('/{id}/messages', [\App\Http\Controllers\Api\ChatController::class, 'getMessages']);
