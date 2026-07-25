@@ -60,6 +60,28 @@ class ChatService
     }
 
     /**
+     * Start a new conversation for a patient
+     */
+    public function startPatientConversation(string $patientId)
+    {
+        $conversation = $this->chatRepository->createConversation([
+            'patient_id' => $patientId,
+            'status' => 'OPEN',
+            'assigned_to' => null
+        ]);
+
+        $this->chatRepository->addParticipants([
+            [
+                'conversation_id' => $conversation['id'],
+                'user_type' => 'Patient',
+                'user_id' => $patientId
+            ]
+        ]);
+
+        return $this->assembler->assembleFullView($conversation, [], []);
+    }
+
+    /**
      * Fetch conversations for a specific patient
      */
     public function getPatientHistory(string $patientId): array

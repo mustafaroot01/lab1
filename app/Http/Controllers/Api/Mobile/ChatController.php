@@ -48,12 +48,33 @@ class ChatController extends Controller
             ]);
         }
 
-        // إذا لم توجد محادثة مفتوحة، نكتفي بإرسال null، ليقوم الموبايل بعرض شاشة فارغة
-        // وبمجرد إرسال أول رسالة، سيتم تكوينها (حسب لوجيك الإرسال)
+        // إذا لم توجد محادثة مفتوحة، نقوم بإنشائها تلقائياً
+        $newConversation = $this->chatService->startPatientConversation($patientId);
+        
+        // return type is ConversationView object, so we convert to array
+        if (is_object($newConversation)) {
+            $newConversation = method_exists($newConversation, 'toArray') ? $newConversation->toArray() : (array) $newConversation;
+        }
+
         return response()->json([
             'status' => true,
-            'conversation' => null
+            'conversation' => $newConversation
         ]);
+    }
+
+    /**
+     * التحقق من الصلاحية (أن المحادثة تعود للمريض)
+     */
+    private function verifyConversationOwnership(string $patientId, string $conversationId)
+    {
+        $conversations = $this->chatService->getUserConversations($patientId, 'Patient');
+        $exists = collect($conversations)->contains(function ($conv) use ($conversationId) {
+            return ($conv['conversation']['id'] ?? '') === $conversationId;
+        });
+
+        if (!$exists) {
+            abort(403, 'غير مصرح لك بالوصول لهذه المحادثة.');
+        }
     }
 
     /**
@@ -61,6 +82,9 @@ class ChatController extends Controller
      */
     public function getMessages(Request $request, string $id)
     {
+        $patientId = $this->getPatientId();
+        $this->verifyConversationOwnership($patientId, $id);
+
         $beforeTimestamp = $request->query('before');
         $messages = $this->chatService->getMessages($id, $beforeTimestamp);
 
@@ -76,6 +100,8 @@ class ChatController extends Controller
     public function sendMessage(SendMessageRequest $request, string $id)
     {
         $patientId = $this->getPatientId();
+        $this->verifyConversationOwnership($patientId, $id);
+
         $clientMessageId = $request->input('client_message_id', uniqid('client_'));
 
         if ($request->hasFile('file')) {
