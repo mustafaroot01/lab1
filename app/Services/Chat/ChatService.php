@@ -40,11 +40,11 @@ class ChatService
             return null;
         }
 
-        $messages = $this->chatRepository->getMessages($conversationId);
+        $messages = $this->getMessages($conversationId);
         
         $historyStats = [];
         if (!empty($conversation['patient_id'])) {
-            $historyStats = $this->patientRepository->getChatHistoryStats($conversation['patient_id']);
+            $historyStats = $this->getPatientHistory($conversation['patient_id']);
         }
 
         return $this->assembler->assembleFullView($conversation, $messages, $historyStats);
