@@ -161,11 +161,14 @@ class OrderController extends Controller
             'uploaded_by_user_id' => $request->user()?->id,
         ]);
 
+        $oldStatus = $order->status;
+        $order->update(['status' => 'completed']);
+
         // تسجيل في الخط الزمني
         OrderStatusLog::create([
             'order_id'           => $order->id,
-            'from_status'        => $order->status,
-            'to_status'          => $order->status,
+            'from_status'        => $oldStatus,
+            'to_status'          => 'completed',
             'changed_by_user_id' => $request->user()?->id,
             'notes'              => "تم رفع نتيجة تحليل للمراجع: {$fileName}",
         ]);
