@@ -255,6 +255,13 @@ Route::prefix('mobile')->middleware('throttle:60,1')->group(function () {
         Route::get('/notifications', [\App\Http\Controllers\Api\V1\Mobile\NotificationController::class, 'index']);
         Route::post('/notifications/read-all', [\App\Http\Controllers\Api\V1\Mobile\NotificationController::class, 'markAsRead']);
         Route::post('/orders/{id}/cancel', [\App\Http\Controllers\Api\Mobile\OrderController::class, 'cancel']);
+
+        // Chat System (Mobile App)
+        Route::prefix('chat')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\Mobile\ChatController::class, 'index']);
+            Route::get('/{id}/messages', [\App\Http\Controllers\Api\Mobile\ChatController::class, 'getMessages']);
+            Route::post('/{id}/send', [\App\Http\Controllers\Api\Mobile\ChatController::class, 'sendMessage']);
+        });
     });
 });
 
