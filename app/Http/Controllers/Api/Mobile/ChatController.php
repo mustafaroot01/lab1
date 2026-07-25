@@ -27,16 +27,32 @@ class ChatController extends Controller
     }
 
     /**
-     * جلب قائمة محادثات المريض
+     * بدء أو جلب المحادثة النشطة (المريض لا يرى الأرشيف)
      */
-    public function index()
+    public function init()
     {
         $patientId = $this->getPatientId();
+        
+        // جلب المحادثات الحالية للمريض
         $conversations = $this->chatService->getUserConversations($patientId, 'Patient');
+        
+        // البحث عن محادثة مفتوحة
+        $activeConversation = collect($conversations)->first(function ($conv) {
+            return ($conv['conversation']['status'] ?? '') === 'OPEN';
+        });
 
+        if ($activeConversation) {
+            return response()->json([
+                'status' => true,
+                'conversation' => $activeConversation
+            ]);
+        }
+
+        // إذا لم توجد محادثة مفتوحة، نكتفي بإرسال null، ليقوم الموبايل بعرض شاشة فارغة
+        // وبمجرد إرسال أول رسالة، سيتم تكوينها (حسب لوجيك الإرسال)
         return response()->json([
             'status' => true,
-            'conversations' => $conversations,
+            'conversation' => null
         ]);
     }
 

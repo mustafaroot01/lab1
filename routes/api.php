@@ -144,8 +144,6 @@ Route::prefix('settings/general')->group(function () {
     });
 
     // Settings
-    Route::get('settings', [\App\Http\Controllers\Api\SettingController::class, 'index']);
-    Route::post('settings', [\App\Http\Controllers\Api\SettingController::class, 'update']);
     
     // Working Hours
     Route::get('settings/working-hours', [\App\Http\Controllers\Api\WorkingHoursController::class, 'index']);
@@ -258,7 +256,7 @@ Route::prefix('mobile')->middleware('throttle:60,1')->group(function () {
 
         // Chat System (Mobile App)
         Route::prefix('chat')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Api\Mobile\ChatController::class, 'index']);
+            Route::get('/', [\App\Http\Controllers\Api\Mobile\ChatController::class, 'init']);
             Route::get('/{id}/messages', [\App\Http\Controllers\Api\Mobile\ChatController::class, 'getMessages']);
             Route::post('/{id}/send', [\App\Http\Controllers\Api\Mobile\ChatController::class, 'sendMessage']);
         });
