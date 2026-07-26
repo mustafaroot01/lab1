@@ -115,13 +115,17 @@ class ChatRepository
     /**
      * Get messages for a conversation
      */
-    public function getMessages(string $conversationId, ?string $beforeMessageId = null, int $limit = 30)
+    public function getMessages(string $conversationId, ?string $beforeTimestamp = null, int $limit = 30)
     {
         $query = [
             'conversation_id' => "eq.{$conversationId}",
             'order' => 'created_at.desc',
             'limit' => $limit
         ];
+        
+        if ($beforeTimestamp) {
+            $query['created_at'] = "lt.{$beforeTimestamp}";
+        }
         
         $response = $this->supabase->get('messages', $query);
 
