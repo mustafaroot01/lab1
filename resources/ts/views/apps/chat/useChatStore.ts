@@ -157,8 +157,8 @@ export const useChatStore = defineStore('chat', {
           }
           this.messagesCursor = res.meta?.next_cursor || null
           this.hasMoreMessages = res.meta?.has_more || false
-          // تعليم كمقروء
-          await $api(`/admin/chat/${conversationId}/read`, { method: 'POST' })
+          // تعليم كمقروء بشكل غير متزامن (لا ينتظر)
+          $api(`/admin/chat/${conversationId}/read`, { method: 'POST' }).catch(() => {})
           // تحديث unread_count في القائمة أو إدراجها في حال لم تكن معروضة في الفلتر الحالي
           const conv = this.conversations.find(c => c.id === conversationId)
           if (conv) {
@@ -225,10 +225,11 @@ export const useChatStore = defineStore('chat', {
     async closeConversation() {
       if (!this.activeChat) return
       try {
-        const res = await $api<{ status: boolean; data: Conversation }>(`/admin/chat/${this.activeChat.conversation.id}/close`, {
+        const res = await $api<{ status: boolean; data: { closed_at: string | null; status: string } }>(`/admin/chat/${this.activeChat.conversation.id}/close`, {
           method: 'POST',
         })
         if (res?.status && res.data) {
+          // تحديث الحالة مباشرة بدون إعادة تحميل كامل
           this.activeChat.conversation.status = 'closed'
           this.activeChat.conversation.closed_at = res.data.closed_at
           const conv = this.conversations.find(c => c.id === this.activeChat!.conversation.id)
@@ -236,8 +237,6 @@ export const useChatStore = defineStore('chat', {
             conv.status = 'closed'
             conv.closed_at = res.data.closed_at
           }
-          // مزامنة سجل التذاكر والبيانات
-          await this.openConversation(this.activeChat.conversation.id)
         }
       } catch (e) {
         console.error('closeConversation error:', e)
@@ -247,10 +246,11 @@ export const useChatStore = defineStore('chat', {
     async reopenConversation() {
       if (!this.activeChat) return
       try {
-        const res = await $api<{ status: boolean; data: Conversation }>(`/admin/chat/${this.activeChat.conversation.id}/reopen`, {
+        const res = await $api<{ status: boolean; data: { closed_at: string | null; status: string } }>(`/admin/chat/${this.activeChat.conversation.id}/reopen`, {
           method: 'POST',
         })
         if (res?.status && res.data) {
+          // تحديث الحالة مباشرة بدون إعادة تحميل كامل
           this.activeChat.conversation.status = 'open'
           this.activeChat.conversation.closed_at = null
           const conv = this.conversations.find(c => c.id === this.activeChat!.conversation.id)
@@ -258,8 +258,6 @@ export const useChatStore = defineStore('chat', {
             conv.status = 'open'
             conv.closed_at = null
           }
-          // مزامنة سجل التذاكر والبيانات
-          await this.openConversation(this.activeChat.conversation.id)
         }
       } catch (e) {
         console.error('reopenConversation error:', e)
@@ -356,6 +354,11 @@ export const useChatStore = defineStore('chat', {
 
     async disconnectFromChatSocket() {
       // Echo functionality has been moved to Supabase Realtime
+    },
+
+    stopRealtimeListeners() {
+      // Placeholder for Supabase realtime unsubscription on component unmount
+      // No active listeners currently — prevents TypeError on chat page leave
     },
   },
 })

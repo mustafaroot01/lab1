@@ -170,11 +170,11 @@ class ChatController extends Controller
      */
     public function closeConversation(string $id)
     {
-        $success = $this->chatService->closeConversation($id);
+        $data = $this->chatService->closeConversation($id);
 
         return response()->json([
-            'status' => $success,
-            'data' => ['closed_at' => now()->toIso8601String()]
+            'status' => true,
+            'data'   => $data
         ]);
     }
 
@@ -183,11 +183,11 @@ class ChatController extends Controller
      */
     public function reopenConversation(string $id)
     {
-        $success = $this->chatService->reopenConversation($id);
+        $data = $this->chatService->reopenConversation($id);
 
         return response()->json([
-            'status' => $success,
-            'data' => ['closed_at' => null]
+            'status' => true,
+            'data'   => $data
         ]);
     }
 

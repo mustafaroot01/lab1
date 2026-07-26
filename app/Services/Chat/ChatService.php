@@ -41,13 +41,13 @@ class ChatService
         }
 
         $messages = $this->getMessages($conversationId);
-        
-        $historyStats = [];
+
+        $patientHistory = [];
         if (!empty($conversation['patient_id'])) {
-            $historyStats = $this->getPatientHistory($conversation['patient_id']);
+            $patientHistory = $this->getPatientHistory($conversation['patient_id']);
         }
 
-        return $this->assembler->assembleFullView($conversation, $messages, $historyStats);
+        return $this->assembler->assembleFullView($conversation, $messages, $patientHistory);
     }
 
     /**
@@ -91,15 +91,16 @@ class ChatService
     }
 
     /**
-     * Fetch messages
+     * Fetch messages - returns in ascending order (oldest first) for the chat UI
      */
     public function getMessages(string $conversationId, ?string $beforeTimestamp = null)
     {
+        // Fetch from Supabase in DESC order (newest first) then reverse to get ASC (oldest first)
         $messages = $this->chatRepository->getMessages($conversationId, $beforeTimestamp, 30);
         $mapped = array_map(function ($msg) {
             return $this->assembler->assembleMessage($msg);
         }, $messages);
-        
+
         return array_values(array_reverse($mapped));
     }
 
@@ -173,19 +174,22 @@ class ChatService
     }
 
     /**
-     * Close the chat
+     * Close the chat - returns the updated conversation data
      */
-    public function closeConversation(string $conversationId)
+    public function closeConversation(string $conversationId): array
     {
-        return $this->chatRepository->updateConversationStatus($conversationId, 'CLOSED');
+        $this->chatRepository->updateConversationStatus($conversationId, 'CLOSED');
+        $closedAt = now()->toIso8601String();
+        return ['closed_at' => $closedAt, 'status' => 'closed'];
     }
 
     /**
-     * Reopen the chat
+     * Reopen the chat - returns the updated conversation data
      */
-    public function reopenConversation(string $conversationId)
+    public function reopenConversation(string $conversationId): array
     {
-        return $this->chatRepository->updateConversationStatus($conversationId, 'OPEN');
+        $this->chatRepository->updateConversationStatus($conversationId, 'OPEN');
+        return ['closed_at' => null, 'status' => 'open'];
     }
 
     /**
