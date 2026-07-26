@@ -1,0 +1,1 @@
+import{au as s,a1 as r,a6 as o,b as n,I as c,x as m,aE as l,a8 as p}from"./main-BRN2JBrw.js";const d=r({opacity:[Number,String],...p(),...l()},"VCardText"),x=s()({name:"VCardText",props:d(),setup(a,e){let{slots:t}=e;return o(()=>n(a.tag,{class:m(["v-card-text",a.class]),style:c([{"--v-card-text-opacity":a.opacity},a.style])},t)),{}}});export{x as V};
