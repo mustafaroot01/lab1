@@ -20,18 +20,14 @@ class ChatController extends Controller
         $this->chatService = $chatService;
     }
 
-    private function getCurrentUser()
+    protected function getCurrentUser(): array
     {
         $user = auth()->user();
-        if (!$user) {
-            abort(401, 'Unauthorized');
-        }
-
-        $userType = ($user instanceof \App\Models\Admin || (method_exists($user, 'isAdmin') && $user->isAdmin())) ? 'Admin' : 'Patient';
         
+        // This controller is protected by 'role:admin' middleware, so all users here are Admins.
         return [
             'id' => (string) $user->id,
-            'type' => $userType
+            'type' => 'Admin'
         ];
     }
 
