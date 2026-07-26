@@ -95,7 +95,7 @@ class ChatService
      */
     public function getMessages(string $conversationId, ?string $beforeTimestamp = null)
     {
-        $messages = $this->chatRepository->getMessages($conversationId, 20, $beforeTimestamp);
+        $messages = $this->chatRepository->getMessages($conversationId, $beforeTimestamp, 30);
         return array_map(function ($msg) {
             return $this->assembler->assembleMessage($msg);
         }, $messages);
